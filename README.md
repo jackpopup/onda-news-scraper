@@ -1,5 +1,9 @@
 # AI-Driven Work
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/popup-studio-ai/AI-driven-work)](https://github.com/popup-studio-ai/AI-driven-work/releases)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/popup-studio-ai/AI-driven-work/pulls)
+
 POPUP STUDIO의 AI Agent를 활용한 업무 프로세스 개선 프로젝트입니다.
 
 ## 프로젝트 개요
@@ -385,6 +389,62 @@ cd ~/Documents/GitHub/popup/AI-driven-work
 POPUP STUDIO 전 직원이 이 리포지토리를 참고하여 업무를 진행합니다.
 개선 사항이나 제안이 있다면 이슈를 등록하거나 Pull Request를 생성해주세요.
 
+### 기여 가이드라인
+
+1. **이슈 등록**: 버그 리포트나 기능 제안을 GitHub Issue로 등록
+2. **Fork & Branch**: 리포지토리를 포크하고 feature 브랜치 생성
+3. **개발**: `.claude/instructions/github-workflow.md` 참고하여 작업
+4. **Pull Request**: develop 브랜치로 PR 생성
+5. **리뷰**: popup-kay의 승인 후 머지
+
+자세한 내용은 `.claude/instructions/github-workflow.md`를 참고하세요.
+
 ## 라이선스
 
-(추후 작성 예정)
+이 프로젝트는 [MIT License](LICENSE)로 배포됩니다.
+
+### MIT License란?
+
+- ✅ 상업적 사용 가능
+- ✅ 수정 및 배포 자유
+- ✅ 사적 사용 허용
+- ✅ 파생 작업물 생성 가능
+
+자세한 내용은 [LICENSE](LICENSE) 파일을 참고하세요.
+
+### 사용 예시
+
+이 프로젝트를 자유롭게 사용할 수 있습니다:
+
+```bash
+# 1. 리포지토리 클론
+git clone https://github.com/popup-studio-ai/AI-driven-work.git
+
+# 2. 자신의 팀/회사에 맞게 커스터마이징
+cd AI-driven-work
+# ... 수정 작업 ...
+
+# 3. 개선사항을 커뮤니티에 기여 (선택사항)
+git checkout -b feature/my-improvement
+# ... PR 생성 ...
+```
+
+### 저작권 고지
+
+```
+MIT License
+
+Copyright (c) 2025 POPUP STUDIO
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction...
+```
+
+전체 라이선스 내용은 [LICENSE](LICENSE) 파일을 참고하세요.
+
+---
+
+**Made with ❤️ by POPUP STUDIO**
+
+**Powered by [Claude Code](https://claude.com/claude-code)**
