@@ -1,2 +1,14 @@
 # macOS
 .DS_Store
+
+# Email configuration (contains sensitive credentials)
+scraping/email_config.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local news files
+scraping/ai_news_*.txt
