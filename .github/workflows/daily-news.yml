@@ -1,4 +1,4 @@
-name: Daily AI News Email
+name: ONDA Daily News
 
 on:
   schedule:
@@ -38,7 +38,7 @@ jobs:
         OUTLOOK_PASSWORD = "your_password_here"
         EOF
 
-    - name: Run news scraper and send email
+    - name: Run ONDA news scraper and send email
       run: |
         cd scraping
-        python ai_startup_news.py --email --to jack@popupstudio.ai --silent
+        python onda_news_scraper.py --email --to jack@popupstudio.ai --silent
