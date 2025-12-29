@@ -13,8 +13,110 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import argparse
 import re
+import os
+import json
 from urllib.parse import quote
 from email_sender import create_onda_html_email, send_email_gmail
+
+# ============================================
+# 스크랩 히스토리 관리 (중복 기사 방지)
+# ============================================
+
+HISTORY_FILE = os.path.join(os.path.dirname(__file__), 'scrape_history.json')
+HISTORY_DAYS = 7  # 7일간 히스토리 유지
+
+
+def load_scrape_history():
+    """
+    스크랩 히스토리 로드
+    """
+    if not os.path.exists(HISTORY_FILE):
+        return {'articles': [], 'last_updated': None}
+
+    try:
+        with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+            history = json.load(f)
+
+        # 오래된 항목 제거 (7일 이상)
+        cutoff = datetime.now() - timedelta(days=HISTORY_DAYS)
+        history['articles'] = [
+            a for a in history['articles']
+            if datetime.fromisoformat(a['scraped_at']) > cutoff
+        ]
+
+        return history
+    except Exception:
+        return {'articles': [], 'last_updated': None}
+
+
+def save_scrape_history(history):
+    """
+    스크랩 히스토리 저장
+    """
+    history['last_updated'] = datetime.now().isoformat()
+    try:
+        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"히스토리 저장 실패: {e}")
+
+
+def add_to_history(articles, history):
+    """
+    스크랩한 기사를 히스토리에 추가
+    """
+    now = datetime.now().isoformat()
+    for article in articles:
+        history['articles'].append({
+            'title': article['title'],
+            'link': article['link'],
+            'scraped_at': now
+        })
+    return history
+
+
+def is_already_scraped(article, history):
+    """
+    이미 스크랩한 기사인지 확인
+    - 같은 링크
+    - 또는 제목 유사도 70% 이상
+    """
+    for hist_article in history['articles']:
+        # 같은 링크면 중복
+        if article['link'] == hist_article['link']:
+            return True
+
+        # 제목 유사도 체크 (70% 이상이면 중복)
+        similarity = calculate_similarity(article['title'], hist_article['title'])
+        if similarity >= 0.7:
+            return True
+
+        # 같은 스토리인지 체크
+        # (히스토리 기사는 summary가 없을 수 있으므로 간단히 체크)
+        hist_as_article = {'title': hist_article['title'], 'summary': ''}
+        if is_same_story(article, hist_as_article):
+            return True
+
+    return False
+
+
+def filter_already_scraped(articles, history, silent=False):
+    """
+    이미 스크랩한 기사 필터링
+    """
+    new_articles = []
+    skipped = 0
+
+    for article in articles:
+        if is_already_scraped(article, history):
+            skipped += 1
+        else:
+            new_articles.append(article)
+
+    if not silent and skipped > 0:
+        print(f"   -> 이전 스크랩 기사 {skipped}개 제외")
+
+    return new_articles
 
 # ============================================
 # 키워드 설정
@@ -466,14 +568,43 @@ def calculate_industry_impact_score(article):
         impact_score += min(40, investment_match * 15)
         impact_factors.append('투자/M&A')
 
-    # 2. 규제/정책 변화 (35점)
+    # 2. 규제/정책 변화 (45점) - 정책 기사 우선순위 상향
     regulation_match = 0
     for kw in REGULATION_KEYWORDS:
         if kw.lower() in text:
             regulation_match += 1
     if regulation_match > 0:
-        impact_score += min(35, regulation_match * 12)
+        impact_score += min(45, regulation_match * 15)
         impact_factors.append('규제/정책')
+
+    # 2-1. 숙박업 직접 관련 정책만 보너스 (+35점)
+    # 숙박업법, 공유숙박 등 숙박업 직접 관련 정책만 높은 점수
+    accommodation_policy_keywords = [
+        '숙박업법', '공유숙박', '생활숙박', '숙박업 규제', '숙박시설',
+        '호텔업', '숙박업 허가', '숙박업 등록', '객실 규제'
+    ]
+    accom_policy_match = 0
+    for kw in accommodation_policy_keywords:
+        if kw in text:
+            accom_policy_match += 1
+    if accom_policy_match > 0:
+        impact_score += min(35, accom_policy_match * 15)
+        impact_factors.append('숙박정책')
+
+    # 2-2. 일반 관광 정책은 낮은 점수 (+15점)
+    # 숙박과 직접 관련 없는 관광 정책은 낮은 가중치
+    general_tourism_keywords = [
+        '관광진흥', '관광정책', 'K-관광', '관광산업', '인바운드', '아웃바운드',
+        '관광객 유치', '관광 활성화'
+    ]
+    general_tourism_match = 0
+    for kw in general_tourism_keywords:
+        if kw in text:
+            general_tourism_match += 1
+    if general_tourism_match > 0 and accom_policy_match == 0:
+        # 숙박 정책이 없을 때만 일반 관광 점수 부여 (낮은 점수)
+        impact_score += min(15, general_tourism_match * 8)
+        impact_factors.append('일반관광정책')
 
     # 3. 신기술/서비스 런칭 (25점)
     newtech_match = 0
@@ -513,33 +644,104 @@ def calculate_industry_impact_score(article):
             impact_score += 10
             break
 
-    # 7. 국내 주요 OTA 우선순위 (야놀자, nol, 마리트, 여기어때)
-    # 국내 OTA는 더 높은 가중치 (+35점), 해외 OTA는 기존 (+20점)
-    domestic_ota = ['야놀자', 'nol', '놀', '마이리얼트립', '마리트', '여기어때']
-    foreign_ota = ['에어비앤비', '아고다', '부킹닷컴', '트립닷컴', '익스피디아']
-    onda = ['온다', 'onda']
+    # 7. 회사별 중요도 점수 (업계 기업 소식 우선)
+    # Tier 0: 자사 ONDA (+80점) - 상향
+    # Tier 1: 국내 대형 OTA (+60점) - 상향: 야놀자, 여기어때, 마이리얼트립
+    # Tier 2: 국내 주요 플랫폼 (+50점) - 상향: 네이버, 카카오, 쏘카, 인터파크트리플
+    # Tier 3: 글로벌 대형 OTA (+50점) - 상향: 에어비앤비, 부킹홀딩스, 익스피디아, 트립닷컴
+    # Tier 4: 글로벌 메타서치/검색 (+40점) - 상향
+    # Tier 5: 국내 중소 플랫폼 (+45점) - 상향
+    # Tier 6: 글로벌 숙박/호텔 플랫폼 (+35점) - 상향
+    # Tier 7: 호텔 체인/숙박업체 (+40점) - 신규 추가
+    # 업계 키워드: PMS, CMS, GDS 등 (+35점)
 
-    ota_found = False
-    for company in onda:
-        if company in text:
-            impact_score += 50  # ONDA 직접 언급은 최고 보너스
-            impact_factors.append(f'자사:{company}')
-            ota_found = True
+    company_tiers = {
+        # Tier 0: 자사 (최고 우선순위)
+        0: {
+            'score': 80,
+            'label': '자사',
+            'keywords': ['온다', 'onda']
+        },
+        # Tier 1: 국내 대형 OTA (시총/기업가치 높음)
+        1: {
+            'score': 60,
+            'label': '국내대형OTA',
+            'keywords': ['야놀자', 'nol', '놀유니버스', '여기어때', '마이리얼트립', '마리트']
+        },
+        # Tier 2: 국내 주요 플랫폼 (대기업/상장사)
+        2: {
+            'score': 50,
+            'label': '국내플랫폼',
+            'keywords': ['네이버', '카카오', '쏘카', '인터파크트리플', '인터파크', '위메프', '티몬']
+        },
+        # Tier 3: 글로벌 대형 OTA (시총 수십~수백조)
+        3: {
+            'score': 50,
+            'label': '글로벌대형OTA',
+            'keywords': ['에어비앤비', 'airbnb', '부킹닷컴', 'booking.com', '부킹홀딩스',
+                        '익스피디아', 'expedia', '트립닷컴', 'trip.com']
+        },
+        # Tier 4: 글로벌 메타서치/검색엔진 (트래픽 대형)
+        4: {
+            'score': 40,
+            'label': '메타서치',
+            'keywords': ['구글호텔', 'google hotel', '트립어드바이저', 'tripadvisor',
+                        '스카이스캐너', 'skyscanner', '카약', 'kayak', '트리바고', 'trivago',
+                        '호텔스컴바인', '메타서치', '여행 검색 엔진', '호텔 검색 플랫폼']
+        },
+        # Tier 5: 국내 중소 플랫폼 (국내라 해외보다 우선)
+        5: {
+            'score': 45,
+            'label': '국내중소OTA',
+            'keywords': ['트립비토즈', '타이드스퀘어', '크리에이트립', '세시간전',
+                        '더케이교직원나라', '교직원나라']
+        },
+        # Tier 6: 글로벌 숙박/호텔 플랫폼
+        6: {
+            'score': 35,
+            'label': '글로벌숙박',
+            'keywords': ['아고다', 'agoda', '호텔스닷컴', 'hotels.com']
+        },
+        # Tier 7: 호텔 체인/숙박업체 (신규 추가)
+        7: {
+            'score': 40,
+            'label': '호텔체인',
+            'keywords': ['메리어트', 'marriott', '힐튼', 'hilton', '아코르', 'accor',
+                        'ihg', '하얏트', 'hyatt', '신라호텔', '롯데호텔', '파라다이스호텔',
+                        '조선호텔', '그랜드하얏트', '호텔신라', '워커힐']
+        },
+    }
+
+    # 업계 키워드 (회사 특정 안되어도 업계 전체 이슈면 중요)
+    industry_keywords = {
+        'score': 35,
+        'label': '업계이슈',
+        'keywords': ['여행/숙박/호텔업계', '여행/숙박/호텔산업', '숙박 위탁 운영', '숙박 예약',
+                    '생활형 숙박시설', 'gds', 'pms', 'cms', 'ota', '온라인여행사',
+                    '호스피탈리티', '숙박업', '숙박산업', '호텔산업', '객실 점유율',
+                    'adr', 'revpar', '채널매니저', '예약 시스템']
+    }
+
+    company_found = False
+
+    # Tier 순서대로 체크 (낮은 Tier = 높은 우선순위)
+    for tier in sorted(company_tiers.keys()):
+        if company_found:
             break
-
-    if not ota_found:
-        for company in domestic_ota:
-            if company in text:
-                impact_score += 35  # 국내 주요 OTA 높은 보너스
-                impact_factors.append(f'국내OTA:{company}')
-                ota_found = True
+        tier_info = company_tiers[tier]
+        for keyword in tier_info['keywords']:
+            if keyword.lower() in text:
+                impact_score += tier_info['score']
+                impact_factors.append(f"{tier_info['label']}:{keyword}")
+                company_found = True
                 break
 
-    if not ota_found:
-        for company in foreign_ota:
-            if company in text:
-                impact_score += 20  # 해외 OTA 기본 보너스
-                impact_factors.append(f'해외OTA:{company}')
+    # 회사가 특정되지 않았으면 업계 키워드 체크
+    if not company_found:
+        for keyword in industry_keywords['keywords']:
+            if keyword.lower() in text:
+                impact_score += industry_keywords['score']
+                impact_factors.append(f"{industry_keywords['label']}:{keyword}")
                 break
 
     # 8. 24시간 이내 기사 보너스 (+25점)
@@ -579,6 +781,29 @@ def calculate_industry_impact_score(article):
             impact_factors.append('주요발표')
             break
 
+    # 10-1. 지방정부/지방공기업 페널티 (-60점)
+    # 지자체, 지방관광공사, 도청, 시청 등 지방 이슈는 ONDA 비즈니스와 관련 낮음
+    local_gov_keywords = [
+        '지자체', '도청', '시청', '군청', '구청',
+        '도지사', '시장', '군수', '구청장',
+        '지방관광공사', '도관광공사', '시관광공사',
+        '경기도', '강원도', '충청도', '전라도', '경상도', '제주도',
+        '경기관광공사', '강원관광재단', '충남관광재단', '전남관광재단',
+        '경북관광공사', '부산관광공사', '제주관광공사',
+        '지역 관광', '지역 축제', '지역 행사', '군 축제', '읍면동'
+    ]
+    local_gov_count = 0
+    for kw in local_gov_keywords:
+        if kw in text:
+            local_gov_count += 1
+
+    if local_gov_count >= 2:
+        impact_score -= 60
+        impact_factors.append('지방정부기사')
+    elif local_gov_count == 1:
+        impact_score -= 30
+        impact_factors.append('지방정부기사')
+
     # 11. 비판/이슈 기사 보너스 (+40점)
     # 기자 취재 기사, 플랫폼 횡포/갑질, 논란 등은 뉴스 가치 높음
     critical_keywords = [
@@ -600,6 +825,52 @@ def calculate_industry_impact_score(article):
         # 1개면 작은 보너스
         impact_score += 30
         impact_factors.append('비판/이슈기사')
+
+    # 12. 정치 기사 페널티 (-500점, 완전 제외)
+    # 정치인 개인의 사적 이슈, 수사, 기소, 스캔들 등은 산업 뉴스와 무관
+    # 정책 기사(산업에 영향)와 정치 기사(개인 이슈)를 구분
+    politics_keywords = [
+        # 정치인/정당 관련
+        '대통령', '전 대통령', '국회의원', '장관', '전 장관',
+        '여당', '야당', '민주당', '국민의힘', '정치인',
+        # 정치 스캔들/수사 관련 (강화)
+        '기소', '구속', '체포', '영장', '검찰', '경찰 수사',
+        '뇌물', '횡령', '배임', '비리', '스캔들', '탄핵',
+        '청문회', '국정감사', '특검', '공소', '재판', '불구속',
+        '피의자', '혐의', '수사', '압수수색',
+        # 정치인 가족/측근 (강화)
+        '문다혜', '문재인', '윤석열', '김건희',
+        '딸', '아들', '부인', '남편', '측근', '비서', '사위', '며느리',
+        # 선거 관련
+        '대선', '총선', '지방선거', '후보', '공천', '출마'
+    ]
+    politics_count = 0
+    for kw in politics_keywords:
+        if kw in text:
+            politics_count += 1
+
+    # 정치 키워드가 1개라도 있으면 강력한 페널티
+    if politics_count >= 2:
+        impact_score -= 500  # 완전 제외 수준
+        impact_factors.append('정치기사제외')
+    elif politics_count == 1:
+        impact_score -= 200  # 강한 페널티
+        impact_factors.append('정치관련제외')
+
+    # 13. 오래된 기사 페널티 (2일 이상 된 기사)
+    # 24시간 이내가 아니면 오래된 기사로 판단
+    time_text = article.get('time_text', '')
+    is_old_article = False
+    if time_text:
+        # "2일 전", "3일 전", "1주일 전" 등 체크
+        if any(x in time_text for x in ['2일', '3일', '4일', '5일', '6일', '7일', '주일', '주 전', '개월']):
+            is_old_article = True
+            impact_score -= 50
+            impact_factors.append('오래된기사')
+        elif '1일' in time_text and '시간' not in time_text:
+            # "1일 전"은 약한 페널티
+            impact_score -= 20
+            impact_factors.append('어제기사')
 
     article['impact_score'] = impact_score
     article['impact_factors'] = impact_factors
@@ -760,6 +1031,90 @@ def remove_duplicates(articles, threshold=0.35):
             unique.append(article)
 
     return unique
+
+
+def get_main_company(article):
+    """
+    기사의 주요 회사명 추출 (OTA/플랫폼 중심)
+    Tier 순서대로 체크하여 가장 중요한 회사 반환
+    """
+    text = (article['title'] + ' ' + article.get('summary', '')).lower()
+
+    # 회사 그룹 정의 (같은 그룹은 동일 회사로 취급)
+    # Tier 순서대로 정렬 (국내 우선)
+    company_groups = [
+        # Tier 0: 자사
+        ('온다', ['온다', 'onda']),
+        # Tier 1: 국내 대형 OTA
+        ('야놀자', ['야놀자', 'nol', '놀유니버스', '놀 유니버스', '야놀자리서치', '야놀자클라우드']),
+        ('여기어때', ['여기어때', '위드이노베이션']),
+        ('마이리얼트립', ['마이리얼트립', '마리트']),
+        # Tier 2: 국내 주요 플랫폼
+        ('네이버', ['네이버']),
+        ('카카오', ['카카오']),
+        ('쏘카', ['쏘카', 'socar']),
+        ('인터파크', ['인터파크트리플', '인터파크']),
+        ('티몬', ['티몬', 'tmon']),
+        ('위메프', ['위메프']),
+        # Tier 3: 글로벌 대형 OTA
+        ('에어비앤비', ['에어비앤비', 'airbnb']),
+        ('부킹닷컴', ['부킹닷컴', 'booking.com', '부킹홀딩스', '부킹']),
+        ('익스피디아', ['익스피디아', 'expedia']),
+        ('트립닷컴', ['트립닷컴', 'trip.com']),
+        # Tier 4: 글로벌 메타서치
+        ('구글호텔', ['구글호텔', 'google hotel']),
+        ('트립어드바이저', ['트립어드바이저', 'tripadvisor']),
+        ('스카이스캐너', ['스카이스캐너', 'skyscanner']),
+        ('카약', ['카약', 'kayak']),
+        ('트리바고', ['트리바고', 'trivago']),
+        ('호텔스컴바인', ['호텔스컴바인']),
+        # Tier 5: 국내 중소 OTA
+        ('트립비토즈', ['트립비토즈']),
+        ('타이드스퀘어', ['타이드스퀘어']),
+        ('크리에이트립', ['크리에이트립']),
+        ('세시간전', ['세시간전']),
+        ('더케이교직원나라', ['더케이교직원나라', '교직원나라']),
+        # Tier 6: 글로벌 숙박
+        ('아고다', ['아고다', 'agoda']),
+        ('호텔스닷컴', ['호텔스닷컴', 'hotels.com']),
+    ]
+
+    for main_company, aliases in company_groups:
+        for alias in aliases:
+            if alias in text:
+                return main_company
+
+    return None
+
+
+def diversify_by_company(articles, max_per_company=1, silent=False):
+    """
+    같은 회사 기사는 max_per_company개만 선정 (다양성 확보)
+    점수가 높은 기사를 우선 선정
+    """
+    company_count = {}
+    diversified = []
+    skipped = []
+
+    for article in articles:
+        company = get_main_company(article)
+
+        if company is None:
+            # 회사가 특정되지 않은 기사는 그대로 포함
+            diversified.append(article)
+        else:
+            current_count = company_count.get(company, 0)
+            if current_count < max_per_company:
+                diversified.append(article)
+                company_count[company] = current_count + 1
+            else:
+                skipped.append(article)
+
+    if not silent and skipped:
+        print(f"   -> 회사별 다양성 적용: {len(skipped)}개 기사 후순위로 이동")
+
+    # 스킵된 기사는 뒤에 추가 (혹시 필요할 경우 대비)
+    return diversified + skipped
 
 
 def apply_freshness_penalty(articles):
@@ -1189,6 +1544,7 @@ def main():
     parser.add_argument('--email', action='store_true', help='이메일로 결과 전송')
     parser.add_argument('--to', type=str, help='받는 사람 이메일 주소')
     parser.add_argument('--silent', action='store_true', help='콘솔 출력 최소화')
+    parser.add_argument('--no-history', action='store_true', help='히스토리 체크 스킵 (테스트용)')
     args = parser.parse_args()
 
     if not args.silent:
@@ -1197,6 +1553,11 @@ def main():
         print("=" * 80)
         print(f"수집 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
+    # 0. 스크랩 히스토리 로드
+    history = load_scrape_history()
+    if not args.silent:
+        print(f"[0단계] 스크랩 히스토리 로드... ({len(history['articles'])}개 기존 기사)")
+
     # 1. 뉴스 수집
     if not args.silent:
         print("[1단계] 뉴스 수집 중...")
@@ -1204,7 +1565,20 @@ def main():
     articles = collect_all_news(silent=args.silent)
 
     if not args.silent:
-        print(f"   -> {len(articles)}개 기사 수집 완료\n")
+        print(f"   -> {len(articles)}개 기사 수집 완료")
+
+    # 1.5 이미 스크랩한 기사 제외
+    if not args.no_history:
+        if not args.silent:
+            print("[1.5단계] 이전 스크랩 기사 필터링 중...")
+        before_filter = len(articles)
+        articles = filter_already_scraped(articles, history, silent=args.silent)
+        if not args.silent:
+            filtered = before_filter - len(articles)
+            print(f"   -> {filtered}개 이전 기사 제외 ({before_filter}개 -> {len(articles)}개)\n")
+    else:
+        if not args.silent:
+            print("   -> 히스토리 체크 스킵\n")
 
     # 2. 관련도 점수 계산
     if not args.silent:
@@ -1251,12 +1625,19 @@ def main():
         article['combined_score'] = article.get('score', 0) + article.get('impact_score', 0) * 1.5
     articles_sorted = sorted(articles, key=lambda x: x.get('combined_score', 0), reverse=True)
 
+    # 4.5 회사별 다양성 적용 (같은 회사 기사는 1개만 TOP에 선정)
+    if not args.silent:
+        print("[4단계] 회사별 다양성 적용 중...")
+    articles_sorted = diversify_by_company(articles_sorted, max_per_company=1, silent=args.silent)
+    if not args.silent:
+        print()
+
     # 5. 상위 10개 선택
     top_articles = articles_sorted[:10]
 
     # 5.5 TOP 10 내 추가 중복 제거 (더 엄격하게)
     if not args.silent:
-        print("[4단계] TOP 10 내 중복 재검사 중...")
+        print("[5단계] TOP 10 내 중복 재검사 중...")
 
     final_top = []
     for article in top_articles:
@@ -1340,7 +1721,14 @@ def main():
 
         if success:
             if not args.silent:
-                print(f"   -> 이메일 전송 완료: {args.to}\n")
+                print(f"   -> 이메일 전송 완료: {args.to}")
+
+            # 히스토리에 TOP 10 기사 저장 (다음번 스크랩에서 제외)
+            if not args.no_history:
+                history = add_to_history(top_articles, history)
+                save_scrape_history(history)
+                if not args.silent:
+                    print(f"   -> 히스토리에 {len(top_articles)}개 기사 저장 완료\n")
             else:
                 print(f"SUCCESS: Email sent to {args.to}")
         else:
