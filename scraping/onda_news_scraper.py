@@ -1408,31 +1408,65 @@ def get_main_company(article):
     return None
 
 
+def get_article_topic(article):
+    """
+    기사의 주요 주제/이슈 추출
+    같은 이슈에 대한 기사가 여러 개일 때 다양성 확보용
+    """
+    text = (article['title'] + ' ' + article.get('summary', '')).lower()
+
+    # 주요 이슈/주제 키워드 그룹
+    topic_groups = [
+        ('생활숙박시설', ['생활숙박시설', '생숙', '레지던스', '주거용', '불법숙박', '숙박시설 규제']),
+        ('외국인관광객', ['외국인 관광객', '외래 관광객', '인바운드', '방한 관광객', '관광객 유치']),
+        ('항공', ['항공', '비행기', '공항', '노선', '취항', '항공권']),
+        ('크루즈', ['크루즈', '유람선', '선박']),
+        ('카지노', ['카지노', '복합리조트', 'ir']),
+        ('면세점', ['면세점', '면세']),
+        ('호캉스', ['호캉스', '스테이케이션', '호텔 패키지']),
+        ('투자유치', ['투자 유치', '시리즈', '펀딩', '투자금']),
+        ('인수합병', ['인수', '합병', 'm&a', '매각']),
+        ('ipo', ['ipo', '상장', '기업공개']),
+        ('실적발표', ['실적', '매출', '영업이익', '분기']),
+    ]
+
+    for topic_name, keywords in topic_groups:
+        for kw in keywords:
+            if kw in text:
+                return topic_name
+
+    return None
+
+
 def diversify_by_company(articles, max_per_company=1, silent=False):
     """
-    같은 회사 기사는 max_per_company개만 선정 (다양성 확보)
+    같은 회사/주제 기사는 max_per_company개만 선정 (다양성 확보)
     점수가 높은 기사를 우선 선정
     """
     company_count = {}
+    topic_count = {}
     diversified = []
     skipped = []
 
     for article in articles:
         company = get_main_company(article)
+        topic = get_article_topic(article)
 
-        if company is None:
-            # 회사가 특정되지 않은 기사는 그대로 포함
-            diversified.append(article)
+        # 회사 또는 주제 중 하나라도 이미 max 도달하면 스킵
+        company_full = company and company_count.get(company, 0) >= max_per_company
+        topic_full = topic and topic_count.get(topic, 0) >= max_per_company
+
+        if company_full or topic_full:
+            skipped.append(article)
         else:
-            current_count = company_count.get(company, 0)
-            if current_count < max_per_company:
-                diversified.append(article)
-                company_count[company] = current_count + 1
-            else:
-                skipped.append(article)
+            diversified.append(article)
+            if company:
+                company_count[company] = company_count.get(company, 0) + 1
+            if topic:
+                topic_count[topic] = topic_count.get(topic, 0) + 1
 
     if not silent and skipped:
-        print(f"   -> 회사별 다양성 적용: {len(skipped)}개 기사 후순위로 이동")
+        print(f"   -> 회사/주제별 다양성 적용: {len(skipped)}개 기사 후순위로 이동")
 
     # 스킵된 기사는 뒤에 추가 (혹시 필요할 경우 대비)
     return diversified + skipped
@@ -1956,11 +1990,13 @@ def main():
     # 5. 상위 20개 선택
     top_articles = articles_sorted[:20]
 
-    # 5.5 TOP 20 내 추가 중복 제거 (더 엄격하게)
+    # 5.5 TOP 20 내 추가 중복 제거 + 주제 다양성 (더 엄격하게)
     if not args.silent:
-        print("[5단계] TOP 20 내 중복 재검사 중...")
+        print("[5단계] TOP 20 내 중복/다양성 재검사 중...")
 
     final_top = []
+    topic_in_top = {}  # 주제별 카운트
+
     for article in top_articles:
         is_dup = False
         for existing in final_top:
@@ -1970,8 +2006,16 @@ def main():
             if sim >= 0.25 or same:
                 is_dup = True
                 break
+
+        # 같은 주제가 이미 있으면 스킵 (주제별 다양성)
+        topic = get_article_topic(article)
+        if topic and topic_in_top.get(topic, 0) >= 1:
+            is_dup = True
+
         if not is_dup:
             final_top.append(article)
+            if topic:
+                topic_in_top[topic] = topic_in_top.get(topic, 0) + 1
 
     # 부족하면 다음 순위에서 채움
     if len(final_top) < 20:
@@ -1985,8 +2029,16 @@ def main():
                 if sim >= 0.25 or same:
                     is_dup = True
                     break
+
+            # 같은 주제가 이미 있으면 스킵
+            topic = get_article_topic(article)
+            if topic and topic_in_top.get(topic, 0) >= 1:
+                is_dup = True
+
             if not is_dup:
                 final_top.append(article)
+                if topic:
+                    topic_in_top[topic] = topic_in_top.get(topic, 0) + 1
 
     top_articles = final_top[:20]
 
