@@ -79,16 +79,22 @@ def is_already_scraped(article, history):
     """
     이미 스크랩한 기사인지 확인
     - 같은 링크
-    - 또는 제목 유사도 70% 이상
+    - 또는 제목 유사도 50% 이상 (기존 70%에서 하향)
+    - 또는 핵심 키워드가 동일한 경우
     """
     for hist_article in history['articles']:
         # 같은 링크면 중복
         if article['link'] == hist_article['link']:
             return True
 
-        # 제목 유사도 체크 (70% 이상이면 중복)
+        # 제목 유사도 체크 (50% 이상이면 중복 - 기존 70%에서 하향)
         similarity = calculate_similarity(article['title'], hist_article['title'])
-        if similarity >= 0.7:
+        if similarity >= 0.5:
+            return True
+
+        # 핵심 키워드 기반 중복 체크 (새로 추가)
+        # 제목에서 핵심 키워드 추출하여 비교
+        if has_same_core_keywords(article['title'], hist_article['title']):
             return True
 
         # 같은 스토리인지 체크
@@ -96,6 +102,83 @@ def is_already_scraped(article, history):
         hist_as_article = {'title': hist_article['title'], 'summary': ''}
         if is_same_story(article, hist_as_article):
             return True
+
+    return False
+
+
+def has_same_core_keywords(title1, title2):
+    """
+    두 제목이 같은 핵심 키워드를 공유하는지 확인
+    예: "해외숙박 예약 플랫폼 이용자 절반 이상 피해 경험"
+        "해외숙박 예약 플랫폼 이용자 54.6% 피해 경험"
+    -> 핵심 키워드: 해외숙박, 플랫폼, 이용자, 피해 -> 중복
+    """
+    import re
+
+    # 불용어 (의미 없는 단어)
+    stopwords = {
+        '의', '를', '을', '이', '가', '은', '는', '에', '에서', '와', '과',
+        '로', '으로', '도', '만', '더', '등', '및', '또', '그', '저', '이런',
+        '것', '수', '중', '후', '전', '약', '각', '매', '내', '외', '상', '하',
+        '대', '소', '신', '구', '위', '아래', '앞', '뒤', '간', '별', '당',
+        '말', '년', '월', '일', '시', '분', '초', '명', '개', '곳', '번',
+        '절반', '이상', '최대', '최소', '약', '경험', '집중', '새해', '올해'
+    }
+
+    # 중요 회사명/브랜드 (이것만 같아도 같은 주제일 가능성 높음)
+    important_entities = [
+        '야놀자', '야놀자리서치', '여기어때', '에어비앤비', '부킹닷컴', '익스피디아',
+        '트립닷컴', '아고다', '호텔스닷컴', '마이리얼트립', '온다', 'onda',
+        '네이버', '카카오', '쏘카', '인터파크'
+    ]
+
+    # 핵심 키워드 추출 (2글자 이상, 숫자/% 제외, 불용어 제외)
+    def extract_keywords(title):
+        # 숫자와 % 제거
+        title_clean = re.sub(r'\d+\.?\d*%?', '', title)
+        # 특수문자 제거 (한글, 영문, 숫자만 남김)
+        title_clean = re.sub(r'[^\w\s가-힣]', ' ', title_clean)
+        # 단어 분리
+        words = title_clean.lower().split()
+        # 2글자 이상, 불용어 제외
+        keywords = set(w for w in words if len(w) >= 2 and w not in stopwords)
+        return keywords
+
+    def find_entities(title):
+        """제목에서 중요 엔티티(회사명) 찾기"""
+        title_lower = title.lower()
+        found = set()
+        for entity in important_entities:
+            if entity.lower() in title_lower:
+                found.add(entity.lower())
+        return found
+
+    kw1 = extract_keywords(title1)
+    kw2 = extract_keywords(title2)
+
+    # 중요 엔티티(회사명) 체크 - 같은 회사가 언급되면 중복 가능성 높음
+    entities1 = find_entities(title1)
+    entities2 = find_entities(title2)
+    common_entities = entities1 & entities2
+
+    if not kw1 or not kw2:
+        return False
+
+    # 공통 키워드 비율 계산
+    common = kw1 & kw2
+    smaller_set = min(len(kw1), len(kw2))
+
+    # 같은 회사명 + 공통 키워드 2개 이상이면 중복
+    if common_entities and len(common) >= 2:
+        return True
+
+    # 작은 집합의 50% 이상이 공통이면 중복 (기존 60%에서 하향)
+    if smaller_set > 0 and len(common) / smaller_set >= 0.5:
+        return True
+
+    # 핵심 주제 키워드가 3개 이상 공통이면 중복
+    if len(common) >= 3:
+        return True
 
     return False
 
@@ -407,11 +490,34 @@ def get_google_news_search(query, num_results=15):
         return []
 
 
+def is_too_old_article(article):
+    """
+    72시간(3일) 이상 지난 기사인지 체크
+    True면 너무 오래된 기사 (제외 대상)
+    """
+    time_text = article.get('time_text', '')
+    if not time_text:
+        return False  # 시간 정보가 없으면 일단 포함
+
+    # 3일 이상 된 기사는 제외
+    old_markers = ['3일', '4일', '5일', '6일', '7일', '주일', '주 전', '개월', '년 전']
+    for marker in old_markers:
+        if marker in time_text:
+            return True
+
+    return False
+
+
 def is_relevant_article(article):
     """
     ONDA 관련 기사인지 필터링
-    핵심 키워드가 하나라도 있어야 관련 기사로 인정
+    - 핵심 키워드가 하나라도 있어야 관련 기사로 인정
+    - 72시간(3일) 이상 지난 기사는 제외
     """
+    # 72시간 이상 지난 기사는 제외
+    if is_too_old_article(article):
+        return False
+
     text = (article['title'] + ' ' + article.get('summary', '')).lower()
 
     # 필수 키워드 - 이 중 하나라도 있어야 함
@@ -644,6 +750,73 @@ def calculate_industry_impact_score(article):
             impact_score += 10
             break
 
+    # 6-1. 제목에 회사명/업계 키워드가 있으면 보너스 (+30점)
+    # 제목에 특정 회사나 업계가 명시되면 뉴스 가치가 높음
+    title_company_keywords = [
+        # 주요 OTA/플랫폼
+        '야놀자', '여기어때', '에어비앤비', '아고다', '부킹닷컴', '트립닷컴',
+        '마이리얼트립', '호텔스닷컴', '익스피디아', '트립어드바이저',
+        # 호텔 체인
+        '메리어트', '힐튼', '아코르', '하얏트', '신라호텔', '롯데호텔',
+        # 업계 키워드
+        '숙박업', '호텔업', 'OTA', '여행업', '관광업', '호스피탈리티'
+    ]
+    for kw in title_company_keywords:
+        if kw.lower() in title:
+            impact_score += 30
+            impact_factors.append(f'제목회사:{kw}')
+            break
+
+    # 6-2. B2B 숙박 IT/솔루션 관련 보너스 (+50점)
+    # ONDA 핵심 비즈니스와 직접 관련된 B2B 솔루션/IT 키워드
+    b2b_solution_keywords = [
+        # 숙박 솔루션
+        'pms', 'cms', 'rms', '채널매니저', '채널 매니저', '예약 시스템',
+        '숙박 솔루션', '호텔 솔루션', '숙박업 솔루션', '통합 관리',
+        '객실 관리', '예약 관리', '재고 관리', '요금 관리',
+        # B2B 키워드
+        'b2b', 'saas', 'api', '연동', '플랫폼 연동', 'ota 연동',
+        # 업계 행사
+        '호텔페어', '호텔쇼', '관광박람회', 'itb', 'wtm',
+        # 기술 키워드
+        '자동화', 'ai 도입', '디지털 전환', 'dx', '클라우드'
+    ]
+    b2b_match = 0
+    for kw in b2b_solution_keywords:
+        if kw.lower() in text:
+            b2b_match += 1
+    if b2b_match >= 2:
+        impact_score += 50
+        impact_factors.append('B2B솔루션')
+    elif b2b_match == 1:
+        impact_score += 25
+        impact_factors.append('B2B솔루션')
+
+    # 6-3. 숙박업계 AI 활용 관련 보너스 (+70점)
+    # 호스피탈리티 업계의 AI 도입, 디지털 전환 관련 기사는 매우 중요
+    ai_hospitality_keywords = [
+        # AI + 숙박/호텔 조합
+        'ai 호텔', 'ai 숙박', 'ai 예약', 'ai 플랫폼', 'ai 도입',
+        '인공지능 호텔', '인공지능 숙박', '인공지능 예약',
+        # 숙박업 디지털 전환
+        '숙박 ai', '호텔 ai', '숙박플랫폼', '플랫폼 탈출',
+        '직접 예약', 'd2c', '자체 예약', '수수료 절감',
+        # 챗봇/자동화
+        '호텔 챗봇', '숙박 챗봇', '예약 챗봇', '자동 응대',
+        # 데이터/분석
+        '수요 예측', '가격 최적화', '동적 가격', '레비뉴 매니지먼트'
+    ]
+    ai_hosp_match = 0
+    for kw in ai_hospitality_keywords:
+        if kw.lower() in text:
+            ai_hosp_match += 1
+    if ai_hosp_match >= 2:
+        impact_score += 70
+        impact_factors.append('AI숙박업')
+    elif ai_hosp_match == 1:
+        impact_score += 40
+        impact_factors.append('AI숙박업')
+
     # 7. 회사별 중요도 점수 (업계 기업 소식 우선)
     # Tier 0: 자사 ONDA (+80점) - 상향
     # Tier 1: 국내 대형 OTA (+60점) - 상향: 야놀자, 여기어때, 마이리얼트립
@@ -702,13 +875,20 @@ def calculate_industry_impact_score(article):
             'label': '글로벌숙박',
             'keywords': ['아고다', 'agoda', '호텔스닷컴', 'hotels.com']
         },
-        # Tier 7: 호텔 체인/숙박업체 (신규 추가)
+        # Tier 7: 호텔 체인/숙박업체 (점수 낮춤 - B2B 고객 아님)
         7: {
-            'score': 40,
+            'score': 15,
             'label': '호텔체인',
             'keywords': ['메리어트', 'marriott', '힐튼', 'hilton', '아코르', 'accor',
                         'ihg', '하얏트', 'hyatt', '신라호텔', '롯데호텔', '파라다이스호텔',
                         '조선호텔', '그랜드하얏트', '호텔신라', '워커힐']
+        },
+        # Tier 8: 중소형 숙박 (ONDA 주요 고객층)
+        8: {
+            'score': 35,
+            'label': '중소형숙박',
+            'keywords': ['펜션', '모텔', '게스트하우스', '민박', '풀빌라', '호스텔',
+                        '중소형 숙박', '소형 숙박', '개인 숙박', '독채', '한옥스테이']
         },
     }
 
@@ -770,6 +950,38 @@ def calculate_industry_impact_score(article):
         impact_score -= 20
         impact_factors.append('프로모션기사')
 
+    # 9-1. 호텔 B2C 기사 페널티 (-50점)
+    # 호텔 패키지, 뷔페, F&B, 다이닝 등은 B2B 숙박 IT와 관련 낮음
+    hotel_b2c_keywords = [
+        # 패키지/상품
+        '패키지', '상품 출시', '신년 패키지', '연말 패키지', '겨울 패키지',
+        '해돋이', '새해맞이', '연말연시',
+        # F&B/다이닝
+        '뷔페', 'f&b', '다이닝', '레스토랑', '조식', '브런치',
+        '먹거리', '맛집', '미식', '셰프', '메뉴',
+        # 호텔 시설/서비스 (B2C)
+        '스파', '수영장', '피트니스', '웨딩', '연회', '컨벤션',
+        '호캉스', '스테이케이션', '휴식'
+    ]
+    hotel_b2c_count = 0
+    for kw in hotel_b2c_keywords:
+        if kw in text:
+            hotel_b2c_count += 1
+
+    # 호텔업계 + B2C 키워드 조합이면 페널티
+    hotel_industry_keywords = ['호텔업계', '호텔·리조트', '특급호텔', '5성급', '호텔 업계']
+    has_hotel_industry = any(kw in text for kw in hotel_industry_keywords)
+
+    if has_hotel_industry and hotel_b2c_count >= 2:
+        impact_score -= 60
+        impact_factors.append('호텔B2C기사')
+    elif hotel_b2c_count >= 3:
+        impact_score -= 50
+        impact_factors.append('호텔B2C기사')
+    elif has_hotel_industry and hotel_b2c_count >= 1:
+        impact_score -= 30
+        impact_factors.append('호텔B2C기사')
+
     # 10. 중요 발표 보너스 (기자간담회, 신제품 출시 등)
     major_event_keywords = [
         '기자간담회', '기자회견', '컨퍼런스', '신제품', '신규 서비스',
@@ -781,27 +993,62 @@ def calculate_industry_impact_score(article):
             impact_factors.append('주요발표')
             break
 
-    # 10-1. 지방정부/지방공기업 페널티 (-60점)
+    # 10-1. 지방정부/지방공기업 페널티 (-100점 ~ -500점)
     # 지자체, 지방관광공사, 도청, 시청 등 지방 이슈는 ONDA 비즈니스와 관련 낮음
+    # 단, 직접적인 숙박업 지원책/모집 공고는 예외
     local_gov_keywords = [
         '지자체', '도청', '시청', '군청', '구청',
         '도지사', '시장', '군수', '구청장',
         '지방관광공사', '도관광공사', '시관광공사',
-        '경기도', '강원도', '충청도', '전라도', '경상도', '제주도',
-        '경기관광공사', '강원관광재단', '충남관광재단', '전남관광재단',
-        '경북관광공사', '부산관광공사', '제주관광공사',
-        '지역 관광', '지역 축제', '지역 행사', '군 축제', '읍면동'
+        # 지방관광공사/재단 (전체 - 인천 등 누락분 추가)
+        '경기관광공사', '강원관광재단', '충남관광재단', '충북관광재단',
+        '전남관광재단', '전북관광재단', '경남관광재단', '경북관광공사',
+        '인천관광공사', '부산관광공사', '대구관광재단', '대전관광공사',
+        '광주관광재단', '울산관광재단', '제주관광공사', '세종관광재단',
+        # 지역 이슈
+        '지역 관광', '지역 축제', '지역 행사', '군 축제', '읍면동',
+        '관광안내소', '관광 인프라', '지역 명소', '옹진군', '선재도'
     ]
+
+    # 신년사/취임사 등 일반 행정 기사는 강력히 제외
+    ceremonial_keywords = [
+        '신년사', '취임사', '이취임', '시무식', '기념식',
+        '신년 인사', '신년 메시지', '새해 인사', '새해 메시지',
+        '시정연설', '도정연설', '군정연설', '구정연설'
+    ]
+
+    # 직접적 지원책 키워드 (이 경우 페널티 감소) - 숙박업 직접 관련만
+    direct_support_keywords = [
+        '숙박업 지원', '숙박시설 지원', '숙박업체 지원',
+        '소상공인 지원', '창업 지원', '융자', '대출 지원',
+        '숙박업 보조금', '숙박 지원금'
+    ]
+
     local_gov_count = 0
     for kw in local_gov_keywords:
         if kw in text:
             local_gov_count += 1
 
-    if local_gov_count >= 2:
-        impact_score -= 60
+    ceremonial_count = 0
+    for kw in ceremonial_keywords:
+        if kw in text:
+            ceremonial_count += 1
+
+    direct_support_count = 0
+    for kw in direct_support_keywords:
+        if kw in text:
+            direct_support_count += 1
+
+    # 신년사/취임사 등은 강력한 페널티 (-500점, 사실상 제외)
+    if ceremonial_count > 0:
+        impact_score -= 500
+        impact_factors.append('신년사/취임사제외')
+    elif local_gov_count >= 2 and direct_support_count == 0:
+        # 지방정부 기사인데 직접 지원책이 아니면 강한 페널티
+        impact_score -= 100
         impact_factors.append('지방정부기사')
-    elif local_gov_count == 1:
-        impact_score -= 30
+    elif local_gov_count == 1 and direct_support_count == 0:
+        impact_score -= 50
         impact_factors.append('지방정부기사')
 
     # 11. 비판/이슈 기사 보너스 (+40점)
@@ -826,18 +1073,40 @@ def calculate_industry_impact_score(article):
         impact_score += 30
         impact_factors.append('비판/이슈기사')
 
+    # 11-1. 해외 사건/사고 기사 페널티 (-100점)
+    # 해외 리조트 화재, 사고 등은 국내 숙박 IT 업계와 직접 관련 없음
+    incident_keywords = ['폭발', '화재', '사망', '부상', '참사', '재난', '테러', '총격', '붕괴', '침몰', '추락']
+    foreign_keywords = ['스위스', '미국', '일본', '중국', '유럽', '태국', '베트남', '프랑스', '독일', '영국', '호주', '뉴질랜드', '캐나다', '멕시코', '브라질', '인도네시아', '필리핀', '말레이시아', '이탈리아', '스페인']
+
+    has_incident = any(kw in text for kw in incident_keywords)
+    has_foreign = any(kw in text for kw in foreign_keywords)
+
+    # 해외 + 사건/사고 조합이면 페널티
+    if has_incident and has_foreign:
+        impact_score -= 100
+        impact_factors.append('해외사건사고')
+    elif has_incident:
+        # 국내 사건/사고도 약한 페널티 (업계 뉴스와 관련 낮음)
+        impact_score -= 30
+        impact_factors.append('사건사고')
+
     # 12. 정치 기사 페널티 (-500점, 완전 제외)
     # 정치인 개인의 사적 이슈, 수사, 기소, 스캔들 등은 산업 뉴스와 무관
     # 정책 기사(산업에 영향)와 정치 기사(개인 이슈)를 구분
     politics_keywords = [
-        # 정치인/정당 관련
+        # 정치인/정당 관련 (한국)
         '대통령', '전 대통령', '국회의원', '장관', '전 장관',
         '여당', '야당', '민주당', '국민의힘', '정치인',
+        # 해외 정치인 (추가)
+        '트럼프', 'trump', '바이든', 'biden', '오바마', '시진핑',
+        '푸틴', '마크롱', '기시다', '백악관', 'white house',
         # 정치 스캔들/수사 관련 (강화)
         '기소', '구속', '체포', '영장', '검찰', '경찰 수사',
         '뇌물', '횡령', '배임', '비리', '스캔들', '탄핵',
         '청문회', '국정감사', '특검', '공소', '재판', '불구속',
-        '피의자', '혐의', '수사', '압수수색',
+        '피의자', '혐의', '압수수색',
+        # 성범죄/스캔들 관련 (추가)
+        '엡스타인', 'epstein', '성범죄', '성추행', '성폭행',
         # 정치인 가족/측근 (강화)
         '문다혜', '문재인', '윤석열', '김건희',
         '딸', '아들', '부인', '남편', '측근', '비서', '사위', '며느리',
@@ -856,6 +1125,54 @@ def calculate_industry_impact_score(article):
     elif politics_count == 1:
         impact_score -= 200  # 강한 페널티
         impact_factors.append('정치관련제외')
+
+    # 12-1. 호스피탈리티/숙박 맥락 검증 페널티 (-80점)
+    # 야놀자 등 키워드가 매칭되어도 실제 숙박/여행 관련 내용이 아니면 페널티
+    # 예: 야구장에서 야놀자 광고가 언급되는 경우
+    hospitality_context_keywords = [
+        # 숙박 관련
+        '숙박', '호텔', '객실', '예약', '체크인', '체크아웃', '숙소',
+        '리조트', '펜션', '게스트하우스', '모텔', '민박', '풀빌라',
+        # 여행 관련
+        '여행', '관광', '투어', '휴양', '휴가', '여행객', '관광객',
+        # 플랫폼/서비스 관련
+        'OTA', '플랫폼', '앱', '예약 서비스', '숙박 플랫폼',
+        # 업계 관련
+        '호스피탈리티', '숙박업', '호텔업', '여행업', '관광업',
+        # 비즈니스 관련
+        '투자', '펀딩', '인수', '합병', '실적', '매출', '영업이익'
+    ]
+
+    # 비관련 맥락 키워드 (이 키워드가 많으면 숙박/여행과 관련 없을 가능성)
+    unrelated_context_keywords = [
+        # 스포츠
+        '야구', '축구', '농구', '배구', '경기장', '스타디움', '관중',
+        '프로야구', 'KBO', 'K리그', '올림픽', '월드컵',
+        # 연예/엔터
+        '드라마', '영화', '콘서트', '공연', '연예인', '아이돌', '배우',
+        # 정치
+        '국회', '정당', '선거', '후보',
+        # 기타
+        '주식', '코스피', '코스닥', '부동산', '아파트', '분양'
+    ]
+
+    hospitality_context_count = 0
+    for kw in hospitality_context_keywords:
+        if kw in text:
+            hospitality_context_count += 1
+
+    unrelated_context_count = 0
+    for kw in unrelated_context_keywords:
+        if kw in text:
+            unrelated_context_count += 1
+
+    # 호스피탈리티 맥락이 거의 없고 비관련 맥락이 많으면 페널티
+    if hospitality_context_count <= 1 and unrelated_context_count >= 2:
+        impact_score -= 80
+        impact_factors.append('맥락불일치')
+    elif hospitality_context_count == 0 and unrelated_context_count >= 1:
+        impact_score -= 60
+        impact_factors.append('맥락불일치')
 
     # 13. 오래된 기사 페널티 (2일 이상 된 기사)
     # 24시간 이내가 아니면 오래된 기사로 판단
@@ -1006,6 +1323,7 @@ def remove_duplicates(articles, threshold=0.35):
     중복 기사 제거 (강화된 버전)
     - 유사도 임계값 낮춤 (0.5 -> 0.35)
     - 같은 스토리 판단 로직 추가
+    - 핵심 키워드 공유 체크 추가
     """
     unique = []
 
@@ -1019,7 +1337,10 @@ def remove_duplicates(articles, threshold=0.35):
             # 2. 같은 스토리인지 체크 (회사+이벤트 또는 회사+금액)
             same_story = is_same_story(article, existing)
 
-            if similarity >= threshold or same_story:
+            # 3. 핵심 키워드 공유 체크 (회사명 + 공통 키워드)
+            same_keywords = has_same_core_keywords(article['title'], existing['title'])
+
+            if similarity >= threshold or same_story or same_keywords:
                 is_duplicate = True
                 # 점수가 더 높은 것 유지
                 if article.get('score', 0) > existing.get('score', 0):
@@ -1041,12 +1362,12 @@ def get_main_company(article):
     text = (article['title'] + ' ' + article.get('summary', '')).lower()
 
     # 회사 그룹 정의 (같은 그룹은 동일 회사로 취급)
-    # Tier 순서대로 정렬 (국내 우선)
+    # 주의: 순서가 중요함! 더 구체적인 키워드를 먼저 체크
     company_groups = [
-        # Tier 0: 자사
-        ('온다', ['온다', 'onda']),
-        # Tier 1: 국내 대형 OTA
+        # Tier 1: 국내 대형 OTA (야놀자를 먼저 체크해야 "야놀자리서치...온다" 같은 기사에서 야놀자로 분류됨)
         ('야놀자', ['야놀자', 'nol', '놀유니버스', '놀 유니버스', '야놀자리서치', '야놀자클라우드']),
+        # Tier 0: 자사 (온다는 동사로 오인될 수 있어 나중에 체크)
+        ('온다', ['onda']),  # '온다'는 동사와 혼동되므로 영문만 사용
         ('여기어때', ['여기어때', '위드이노베이션']),
         ('마이리얼트립', ['마이리얼트립', '마리트']),
         # Tier 2: 국내 주요 플랫폼
@@ -1632,12 +1953,12 @@ def main():
     if not args.silent:
         print()
 
-    # 5. 상위 10개 선택
-    top_articles = articles_sorted[:10]
+    # 5. 상위 20개 선택
+    top_articles = articles_sorted[:20]
 
-    # 5.5 TOP 10 내 추가 중복 제거 (더 엄격하게)
+    # 5.5 TOP 20 내 추가 중복 제거 (더 엄격하게)
     if not args.silent:
-        print("[5단계] TOP 10 내 중복 재검사 중...")
+        print("[5단계] TOP 20 내 중복 재검사 중...")
 
     final_top = []
     for article in top_articles:
@@ -1653,9 +1974,9 @@ def main():
             final_top.append(article)
 
     # 부족하면 다음 순위에서 채움
-    if len(final_top) < 10:
-        for article in articles_sorted[10:]:
-            if len(final_top) >= 10:
+    if len(final_top) < 20:
+        for article in articles_sorted[20:]:
+            if len(final_top) >= 20:
                 break
             is_dup = False
             for existing in final_top:
@@ -1667,10 +1988,10 @@ def main():
             if not is_dup:
                 final_top.append(article)
 
-    top_articles = final_top[:10]
+    top_articles = final_top[:20]
 
     if not args.silent:
-        print(f"   -> TOP 10 중복 제거 완료 (최종 {len(top_articles)}개)\n")
+        print(f"   -> TOP 20 중복 제거 완료 (최종 {len(top_articles)}개)\n")
 
     # 6. AI 에디터로 TOP 3 선정 (Option A)
     if not args.silent:
