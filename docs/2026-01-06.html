@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONDA 뉴스 브리핑 - 2026년 01월 06일</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 13px;
+        }
+        .section-title {
+            background: #1a237e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            margin: 20px 0 12px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .top-article {
+            background: white;
+            border-left: 5px solid #ff6f00;
+            padding: 16px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        .rank {
+            display: inline-block;
+            background: #ff6f00;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .category {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1a237e;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a237e;
+            margin: 10px 0 6px 0;
+            line-height: 1.4;
+        }
+        .title a {
+            color: #1a237e;
+            text-decoration: none;
+        }
+        .title a:hover {
+            text-decoration: underline;
+        }
+        .summary {
+            color: #555;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .meta {
+            color: #888;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+        .link {
+            display: inline-block;
+            background: #1a237e;
+            color: white;
+            padding: 6px 14px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .link:hover {
+            background: #0d47a1;
+        }
+        /* 4~10위: 테이블 기반 2열 그리드 */
+        .grid-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px;
+        }
+        .grid-cell {
+            width: 50%;
+            background: white;
+            border-left: 3px solid #1a237e;
+            padding: 12px;
+            border-radius: 5px;
+            vertical-align: top;
+        }
+        .grid-rank {
+            display: inline-block;
+            background: #1a237e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .grid-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin: 8px 0 4px 0;
+            line-height: 1.4;
+        }
+        .grid-title a {
+            color: #1a237e;
+            text-decoration: none;
+        }
+        .grid-title a:hover {
+            text-decoration: underline;
+        }
+        .grid-meta {
+            color: #888;
+            font-size: 10px;
+        }
+        /* 11~20위: 테이블 형식 */
+        .news-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+            font-size: 12px;
+        }
+        .news-table th {
+            background: #e8eaf6;
+            color: #1a237e;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .news-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        .news-table tr:last-child td {
+            border-bottom: none;
+        }
+        .news-table tr:hover {
+            background: #f8f9fa;
+        }
+        .table-rank {
+            background: #e8eaf6;
+            color: #1a237e;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .table-title {
+            color: #333;
+            font-weight: 500;
+        }
+        .table-title a {
+            color: #1a237e;
+            text-decoration: none;
+        }
+        .table-title a:hover {
+            text-decoration: underline;
+        }
+        .table-source {
+            color: #888;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            color: #666;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ONDA 뉴스 브리핑</h1>
+        <p>B2B Hospitality Tech | 2026년 01월 06일 | TOP 20</p>
+    </div>
+
+    <div class="section-title">🏆 TOP 3 주요 뉴스</div>
+
+    <div class="top-article">
+        <span class="rank">1위</span>
+        <span class="category">OTA/플랫폼</span>
+        <div class="title"><a href="https://example.com/1" target="_blank">야놀자, 글로벌 호텔 체인과 전략적 파트너십 체결</a></div>
+        <div class="summary">야놀자가 글로벌 호텔 체인과 기술 협력 파트너십을 체결했다. 이번 파트너십을 통해 글로벌 시장 진출을 가속화할 예정이다.</div>
+        <div class="meta">출처: 한국경제 | 점수: 95점</div>
+        <a href="https://example.com/1" target="_blank" class="link">기사 읽기 →</a>
+    </div>
+
+    <div class="top-article">
+        <span class="rank">2위</span>
+        <span class="category">정책/규제</span>
+        <div class="title"><a href="https://example.com/2" target="_blank">정부, 숙박업 규제 완화 방안 발표</a></div>
+        <div class="summary">문화체육관광부가 숙박업 관련 규제 완화 방안을 발표했다. 소규모 숙박업체의 행정 부담이 크게 줄어들 전망이다.</div>
+        <div class="meta">출처: 연합뉴스 | 점수: 92점</div>
+        <a href="https://example.com/2" target="_blank" class="link">기사 읽기 →</a>
+    </div>
+
+    <div class="top-article">
+        <span class="rank">3위</span>
+        <span class="category">스타트업</span>
+        <div class="title"><a href="https://example.com/3" target="_blank">AI 기반 호텔 예약 시스템 스타트업 시리즈A 투자 유치</a></div>
+        <div class="summary">AI 호텔 예약 시스템 스타트업이 100억원 규모 투자를 유치했다.</div>
+        <div class="meta">출처: 스타트업투데이 | 점수: 88점</div>
+        <a href="https://example.com/3" target="_blank" class="link">기사 읽기 →</a>
+    </div>
+<div class="section-title">📰 4~10위 뉴스</div><table class="grid-table"><tbody><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">4위</span>
+                <span class="category">OTA/플랫폼</span>
+                <div class="grid-title"><a href="https://example.com/4" target="_blank">에어비앤비, 한국 시장 공략 강화</a></div>
+                <div class="grid-meta">조선비즈 | 85점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">5위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="https://example.com/5" target="_blank">호텔신라, 신규 브랜드 론칭 예정</a></div>
+                <div class="grid-meta">매일경제 | 82점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">6위</span>
+                <span class="category">OTA/플랫폼</span>
+                <div class="grid-title"><a href="https://example.com/6" target="_blank">여기어때, MAU 500만 돌파</a></div>
+                <div class="grid-meta">디지털타임스 | 80점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">7위</span>
+                <span class="category">정책/규제</span>
+                <div class="grid-title"><a href="https://example.com/7" target="_blank">관광공사, 숙박 품질 인증제 확대</a></div>
+                <div class="grid-meta">뉴시스 | 78점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">8위</span>
+                <span class="category">해외</span>
+                <div class="grid-title"><a href="https://example.com/8" target="_blank">부킹닷컴, 아시아 투자 확대</a></div>
+                <div class="grid-meta">ZDNet | 76점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">9위</span>
+                <span class="category">AI/기술</span>
+                <div class="grid-title"><a href="https://example.com/9" target="_blank">PMS 솔루션 기업 클라우드 전환 가속</a></div>
+                <div class="grid-meta">전자신문 | 74점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">10위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="https://example.com/10" target="_blank">메리어트, 국내 신규 호텔 오픈</a></div>
+                <div class="grid-meta">서울경제 | 72점</div>
+            </td>
+<td class="grid-cell" style="background:transparent;border:none;"></td></tr></tbody></table><div class="section-title">📋 11~20위 뉴스</div>
+    <table class="news-table">
+        <tr>
+            <th style="width:40px;">순위</th>
+            <th>제목</th>
+            <th style="width:70px;">출처</th>
+            <th style="width:50px;">점수</th>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">11위</span></td>
+            <td class="table-title"><a href="https://example.com/11" target="_blank">트립닷컴, 한국 마케팅 강화</a></td>
+            <td class="table-source">아시아경제</td>
+            <td class="table-source">70점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">12위</span></td>
+            <td class="table-title"><a href="https://example.com/12" target="_blank">숙박업계 인력난 심화</a></td>
+            <td class="table-source">한겨레</td>
+            <td class="table-source">68점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">13위</span></td>
+            <td class="table-title"><a href="https://example.com/13" target="_blank">온다, 채널매니저 기능 업그레이드</a></td>
+            <td class="table-source">벤처스퀘어</td>
+            <td class="table-source">66점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">14위</span></td>
+            <td class="table-title"><a href="https://example.com/14" target="_blank">호텔 객실 가격 상승세 지속</a></td>
+            <td class="table-source">MBN</td>
+            <td class="table-source">64점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">15위</span></td>
+            <td class="table-title"><a href="https://example.com/15" target="_blank">익스피디아, AI 챗봇 도입</a></td>
+            <td class="table-source">테크크런치</td>
+            <td class="table-source">62점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">16위</span></td>
+            <td class="table-title"><a href="https://example.com/16" target="_blank">관광 스타트업 투자 증가</a></td>
+            <td class="table-source">platum</td>
+            <td class="table-source">60점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">17위</span></td>
+            <td class="table-title"><a href="https://example.com/17" target="_blank">호캉스 트렌드 지속</a></td>
+            <td class="table-source">한국일보</td>
+            <td class="table-source">58점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">18위</span></td>
+            <td class="table-title"><a href="https://example.com/18" target="_blank">아고다, 프로모션 강화</a></td>
+            <td class="table-source">이데일리</td>
+            <td class="table-source">56점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">19위</span></td>
+            <td class="table-title"><a href="https://example.com/19" target="_blank">지방 관광 활성화 정책 발표</a></td>
+            <td class="table-source">KBS</td>
+            <td class="table-source">54점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">20위</span></td>
+            <td class="table-title"><a href="https://example.com/20" target="_blank">힐튼, 국내 확장 계획</a></td>
+            <td class="table-source">SBS</td>
+            <td class="table-source">52점</td>
+        </tr>
+</table>
+    <div class="footer">
+        <p>이 페이지는 ONDA 뉴스 수집 시스템에서 자동으로 생성되었습니다.</p>
+        <p>🤖 Powered by AI News Scraper</p>
+    </div>
+</body>
+</html>
