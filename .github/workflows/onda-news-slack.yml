@@ -1,0 +1,111 @@
+name: ONDA News Daily Slack
+
+on:
+  schedule:
+    # 매일 아침 6시 (KST) = UTC 21:00 (전날)
+    - cron: '0 21 * * *'
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  send-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Run ONDA News Scraper
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        working-directory: scraping
+        run: |
+          python onda_news_scraper.py
+
+      - name: Send to Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        working-directory: scraping
+        run: |
+          python -c "
+          import json
+          import os
+          from slack_sender import send_to_slack_via_bot, generate_news_html_page
+
+          # latest_news.json 로드
+          with open('latest_news.json', 'r', encoding='utf-8') as f:
+              data = json.load(f)
+
+          top_3 = data.get('top_3', [])
+          top_20 = data.get('top_20', [])
+
+          # HTML 생성
+          result = generate_news_html_page(top_20)
+          html_path = result[0] if isinstance(result, tuple) else result
+          print(f'HTML 생성: {html_path}')
+
+          # GitHub Pages URL (Actions에서는 푸시 생략, 나중에 수동 또는 별도 처리)
+          from datetime import datetime
+          today = datetime.now().strftime('%Y-%m-%d')
+          full_news_url = f'https://jackpopup.github.io/onda-news-scraper/{today}.html'
+
+          # Slack 발송
+          result = send_to_slack_via_bot(
+              articles=top_3,
+              channel_id=os.environ.get('SLACK_CHANNEL_ID', 'C0A7D41B3ED'),
+              bot_token=os.environ.get('SLACK_BOT_TOKEN'),
+              is_draft=True,
+              full_news_url=full_news_url
+          )
+
+          if result['success']:
+              print(f'Slack 발송 성공! thread_ts: {result.get(\"thread_ts\")}')
+              # thread_ts 저장
+              data['thread_ts'] = result.get('thread_ts')
+              data['full_news_url'] = full_news_url
+              with open('latest_news.json', 'w', encoding='utf-8') as f:
+                  json.dump(data, f, ensure_ascii=False, indent=2)
+          else:
+              print(f'Slack 발송 실패: {result.get(\"message\")}')
+              exit(1)
+          "
+
+      - name: Upload HTML to GitHub Pages repo
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          cd scraping/news_pages
+          TODAY=$(date +%Y-%m-%d)
+          HTML_FILE=$(ls -t *.html 2>/dev/null | head -1)
+
+          if [ -z "$HTML_FILE" ]; then
+            echo "No HTML file found"
+            exit 0
+          fi
+
+          echo "Uploading $HTML_FILE to GitHub Pages..."
+
+          # Clone the pages repo
+          git clone https://${GH_TOKEN}@github.com/jackpopup/onda-news-scraper.git /tmp/pages-repo
+
+          # Copy HTML
+          cp "$HTML_FILE" "/tmp/pages-repo/${TODAY}.html"
+          cp "$HTML_FILE" "/tmp/pages-repo/index.html"
+
+          # Commit and push
+          cd /tmp/pages-repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Daily news update: ${TODAY}" || echo "No changes to commit"
+          git push || echo "Push failed"

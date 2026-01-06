@@ -794,11 +794,11 @@ def parse_feedback(feedback_text):
         num = int(match.group(1))
         commands.append({'action': 'move_down', 'target': num})
 
-    # 순서 교체 패턴: "1번이랑 3번 바꿔", "1, 3 교체", "1번 2번 위치 바꿔"
-    swap_pattern = r'(\d+)\s*번?\s*(이랑|하고|,|과|와)?\s*(\d+)\s*번?\s*(위치\s*)?(바꿔|바꾸고|교체|스왑)'
+    # 순서 교체 패턴: "1번이랑 3번 바꿔", "1, 3 교체", "1번 2번 위치 바꿔", "3위와 6위 순서 바꿔"
+    swap_pattern = r'(\d+)\s*(번|위)?\s*(이랑|하고|,|과|와)?\s*(\d+)\s*(번|위)?\s*(위치|순서)?\s*(바꿔|바꾸고|교체|스왑)'
     for match in re.finditer(swap_pattern, text):
         num1 = int(match.group(1))
-        num2 = int(match.group(3))
+        num2 = int(match.group(4))
         commands.append({'action': 'swap', 'target': (num1, num2)})
 
     # 교체 의미의 다른 패턴: "15번을 1번에 넣고 1번은 15번으로" → 15와 1 교체
@@ -838,9 +838,10 @@ def parse_feedback(feedback_text):
         category = match.group(1)
         commands.append({'action': 'exclude_category', 'target': category})
 
-    # 승인 패턴: "확인", "좋아", "발송해", "괜찮아"
-    approve_pattern = r'(확인|좋아|ok|발송|보내|괜찮|승인|ㅇㅋ|완료)'
-    if re.search(approve_pattern, text):
+    # 승인 패턴: 명확한 승인 의도만 인식 (단독 또는 문장 끝에 사용)
+    # "완료", "보내", "괜찮" 등 다른 문맥에서 쓰일 수 있는 표현은 제외
+    approve_pattern = r'^(확인|발송|승인|ㅇㅋ|ok|OK|보내줘|발송해줘|최종발송|발송해)$'
+    if re.search(approve_pattern, text.strip()):
         commands.append({'action': 'approve'})
 
     return commands
