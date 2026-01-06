@@ -5,140 +5,378 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ONDA 뉴스 브리핑 - 2026년 01월 06일</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
+            padding: 20px;
+            background: #f5f5f5;
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
             color: white;
-            padding: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
             text-align: center;
         }
         .header h1 {
+            margin: 0;
             font-size: 24px;
-            margin-bottom: 8px;
         }
         .header p {
+            margin: 8px 0 0 0;
             opacity: 0.9;
-            font-size: 14px;
+            font-size: 13px;
         }
-        .content {
-            padding: 20px;
-        }
-        .article {
-            border-bottom: 1px solid #eee;
-            padding: 16px 0;
-        }
-        .article:last-child {
-            border-bottom: none;
-        }
-        .article-num {
-            display: inline-block;
-            background: #667eea;
+        .section-title {
+            background: #1a237e;
             color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            text-align: center;
-            font-size: 12px;
-            line-height: 24px;
-            margin-right: 10px;
+            padding: 8px 16px;
+            border-radius: 5px;
+            margin: 20px 0 12px 0;
+            font-size: 14px;
+            font-weight: bold;
         }
-        .article-title {
+        .top-article {
+            background: white;
+            border-left: 5px solid #ff6f00;
+            padding: 16px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        .rank {
+            display: inline-block;
+            background: #ff6f00;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .category {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1a237e;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        .title {
             font-size: 16px;
-            font-weight: 600;
-            color: #333;
+            font-weight: bold;
+            color: #1a237e;
+            margin: 10px 0 6px 0;
+            line-height: 1.4;
+        }
+        .title a {
+            color: #1a237e;
             text-decoration: none;
         }
-        .article-title:hover {
-            color: #667eea;
+        .title a:hover {
+            text-decoration: underline;
         }
-        .article-meta {
-            margin-top: 6px;
+        .summary {
+            color: #555;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
             font-size: 13px;
-            color: #888;
+            line-height: 1.6;
         }
-        .article-category {
+        .meta {
+            color: #888;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+        .link {
             display: inline-block;
-            background: #f0f0f0;
-            padding: 2px 8px;
+            background: #1a237e;
+            color: white;
+            padding: 6px 14px;
+            text-decoration: none;
             border-radius: 4px;
             font-size: 12px;
-            margin-right: 8px;
-        }
-        .article-summary {
             margin-top: 8px;
-            font-size: 14px;
-            color: #666;
+        }
+        .link:hover {
+            background: #0d47a1;
+        }
+        /* 4~10위: 테이블 기반 2열 그리드 */
+        .grid-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px;
+        }
+        .grid-cell {
+            width: 50%;
+            background: white;
+            border-left: 3px solid #1a237e;
+            padding: 12px;
+            border-radius: 5px;
+            vertical-align: top;
+        }
+        .grid-rank {
+            display: inline-block;
+            background: #1a237e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .grid-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin: 8px 0 4px 0;
+            line-height: 1.4;
+        }
+        .grid-title a {
+            color: #1a237e;
+            text-decoration: none;
+        }
+        .grid-title a:hover {
+            text-decoration: underline;
+        }
+        .grid-meta {
+            color: #888;
+            font-size: 10px;
+        }
+        /* 11~20위: 테이블 형식 */
+        .news-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+            font-size: 12px;
+        }
+        .news-table th {
+            background: #e8eaf6;
+            color: #1a237e;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .news-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        .news-table tr:last-child td {
+            border-bottom: none;
+        }
+        .news-table tr:hover {
+            background: #f8f9fa;
+        }
+        .table-rank {
+            background: #e8eaf6;
+            color: #1a237e;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .table-title {
+            color: #333;
+            font-weight: 500;
+        }
+        .table-title a {
+            color: #1a237e;
+            text-decoration: none;
+        }
+        .table-title a:hover {
+            text-decoration: underline;
+        }
+        .table-source {
+            color: #888;
+            font-size: 10px;
+            white-space: nowrap;
         }
         .footer {
-            background: #f9f9f9;
-            padding: 15px;
             text-align: center;
-            font-size: 12px;
-            color: #888;
+            margin-top: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            color: #666;
+            font-size: 11px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📰 ONDA 뉴스 브리핑</h1>
-            <p>2026년 01월 06일 | 총 3건</p>
-        </div>
-        <div class="content">
+    <div class="header">
+        <h1>ONDA 뉴스 브리핑</h1>
+        <p>B2B Hospitality Tech | 2026년 01월 06일 | TOP 20</p>
+    </div>
 
-            <div class="article">
-                <span class="article-num">1</span>
-                <a href="https://example.com/1" target="_blank" class="article-title">야놀자, 글로벌 호텔 체인과 전략적 파트너십 체결</a>
-                <div class="article-meta">
-                    <span class="article-category">🌐 OTA/플랫폼</span>
-                    한국경제
-                </div>
-                <div class="article-summary">야놀자가 글로벌 호텔 체인과 기술 협력 파트너십을 체결했다.</div>
-            </div>
+    <div class="section-title">🏆 TOP 3 주요 뉴스</div>
 
-            <div class="article">
-                <span class="article-num">2</span>
-                <a href="https://example.com/2" target="_blank" class="article-title">정부, 숙박업 규제 완화 방안 발표</a>
-                <div class="article-meta">
-                    <span class="article-category">🏛️ 정책/규제</span>
-                    연합뉴스
-                </div>
-                <div class="article-summary">문화체육관광부가 숙박업 관련 규제 완화 방안을 발표했다.</div>
-            </div>
+    <div class="top-article">
+        <span class="rank">1위</span>
+        <span class="category">OTA/플랫폼</span>
+        <div class="title"><a href="https://zdnet.co.kr/view/?no=20260106100648" target="_blank">공정위, 마이리얼트립 제재…여행상품 판매자 정보 미표시 적발</a></div>
+        <div class="summary">6일 공정위는 마이리얼트립이 사이버몰을 운영하면서 여행상품을 중개·판매하는 과정에서 판매자의 상호, 대표자, 사업자등록번호 등 법에서 정한 정보를 명확히 표시하지 않았다고 밝혔다.</div>
+        <div class="meta">출처: 지디넷코리아 | 점수: 25점</div>
+        <a href="https://zdnet.co.kr/view/?no=20260106100648" target="_blank" class="link">기사 읽기 →</a>
+    </div>
 
-            <div class="article">
-                <span class="article-num">3</span>
-                <a href="https://example.com/3" target="_blank" class="article-title">AI 기반 호텔 예약 시스템 스타트업 시리즈A 투자 유치</a>
-                <div class="article-meta">
-                    <span class="article-category">🚀 스타트업</span>
-                    스타트업투데이
-                </div>
-                <div class="article-summary">AI 호텔 예약 시스템 스타트업이 100억원 규모 투자를 유치했다.</div>
-            </div>
+    <div class="top-article">
+        <span class="rank">2위</span>
+        <span class="category">정책/규제</span>
+        <div class="title"><a href="https://www.mt.co.kr/amp/estate/2026/01/06/2026010520183455113" target="_blank">생숙 '1객실'도 온라인 숙박업 허용… 국토부, 규제특례 부여</a></div>
+        <div class="summary">플랫폼 기반해 위생·안전 관리 미신고 3만실에 합법운영 기회 시장혼란 완화·유휴 자원 활용 생활형숙박시설(이하 생숙)을 1실만 소유해도 숙박업자로 신고할 수 있는 길이 열렸다.</div>
+        <div class="meta">출처: 머니투데이 | 점수: 52점</div>
+        <a href="https://www.mt.co.kr/amp/estate/2026/01/06/2026010520183455113" target="_blank" class="link">기사 읽기 →</a>
+    </div>
 
-        </div>
-        <div class="footer">
-            🤖 ONDA 뉴스 스크래퍼 | Powered by AI
-        </div>
+    <div class="top-article">
+        <span class="rank">3위</span>
+        <span class="category">트래블테크</span>
+        <div class="title"><a href="https://economist.co.kr/article/view/ecn202601060010" target="_blank">H2O호스피탈리티, 인니 최대 부동산 플랫폼 ‘마미코스’ 뚫었다… 1만 7천 객실 디지털 전환</a></div>
+        <div class="summary">마리아 레지나 앙깃(왼쪽, Maria Resina Anggit) 마미코스 대표 오승준 H2O 글로벌사업부문 본부장.</div>
+        <div class="meta">출처: 이코노미스트 | 점수: 35점</div>
+        <a href="https://economist.co.kr/article/view/ecn202601060010" target="_blank" class="link">기사 읽기 →</a>
+    </div>
+<div class="section-title">📰 4~10위 뉴스</div><table class="grid-table"><tbody><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">4위</span>
+                <span class="category">정책/규제</span>
+                <div class="grid-title"><a href="https://www.newsis.com/view/NISX20260106_0003467213" target="_blank">중기 우수 기술로 관광 수혈…문체부·관광공사 ‘관광플러스테크’ 공모</a></div>
+                <div class="grid-meta">뉴시스 | 24점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">5위</span>
+                <span class="category">OTA/플랫폼</span>
+                <div class="grid-title"><a href="http://www.financialreview.co.kr/news/articleView.html?idxno=39473" target="_blank">[OTA 소식] "상하이 뜨고, 지방은 넓힌다"… 2026년 새해, 글로벌 ...</a></div>
+                <div class="grid-meta">파이낸셜리뷰 | 25점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">6위</span>
+                <span class="category">트래블테크</span>
+                <div class="grid-title"><a href="https://www.venturesquare.net/1030931/" target="_blank">H2O호스피탈리티, 인도네시아 마미코스와 ‘스마트 체크인·디지털 도어락 공급...</a></div>
+                <div class="grid-meta">벤처스퀘어 | 20점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">7위</span>
+                <span class="category">OTA/플랫폼</span>
+                <div class="grid-title"><a href="https://www.bizwnews.com/news/articleView.html?idxno=120358" target="_blank">여기어때, 신년에도 '패키지 여행' 프로모션 이어간다</a></div>
+                <div class="grid-meta">비즈월드 | 25점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">8위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="https://news.mtn.co.kr/news-detail/2026010614364664983" target="_blank">롯데호텔, 시애틀 호텔 지분 매각 나서…美현지 사업 재편</a></div>
+                <div class="grid-meta">MTN 머니투데이방송 | 15점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">9위</span>
+                <span class="category">OTA/플랫폼</span>
+                <div class="grid-title"><a href="https://www.pinpointnews.co.kr/news/articleView.html?idxno=414218" target="_blank">상하이·청주 ‘급부상’…아고다, 한국 여행객이 주목한 신흥 여행지 발표</a></div>
+                <div class="grid-meta">핀포인트뉴스 | 25점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">10위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="https://www.ytn.co.kr/_ln/0102_202601051150198663" target="_blank">생활형숙박시설 ’1객실’만 있어도 숙박업 가능</a></div>
+                <div class="grid-meta">YTN | 30점</div>
+            </td>
+<td class="grid-cell" style="background:transparent;border:none;"></td></tr></tbody></table><div class="section-title">📋 11~20위 뉴스</div>
+    <table class="news-table">
+        <tr>
+            <th style="width:40px;">순위</th>
+            <th>제목</th>
+            <th style="width:70px;">출처</th>
+            <th style="width:50px;">점수</th>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">11위</span></td>
+            <td class="table-title"><a href="https://www.opinionnews.co.kr/news/articleView.html?idxno=130728" target="_blank">호텔신라, '中 첫 진출'…신라모노그램 시안 오픈</a></td>
+            <td class="table-source">오피니언뉴스</td>
+            <td class="table-source">15점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">12위</span></td>
+            <td class="table-title"><a href="https://v.daum.net/v/20260106162634020" target="_blank">특급 호텔 돌잔치 예약 전쟁…'1000만원' 가격에도 만석 행진</a></td>
+            <td class="table-source">Daum</td>
+            <td class="table-source">15점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">13위</span></td>
+            <td class="table-title"><a href="https://www.seoulwire.com/news/articleView.html?idxno=700326" target="_blank">워커힐 호텔앤리조트, 분리형 가족 휴식 프로그램 '윈터 키즈 캠프' 운영</a></td>
+            <td class="table-source">서울와이어</td>
+            <td class="table-source">30점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">14위</span></td>
+            <td class="table-title"><a href="https://www.newswatch.kr/news/articleView.html?idxno=76124" target="_blank">호텔신라, '신라' 브랜드로 중국 첫 진출</a></td>
+            <td class="table-source">뉴스워치</td>
+            <td class="table-source">15점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">15위</span></td>
+            <td class="table-title"><a href="https://www.seoulwire.com/news/articleView.html?idxno=700191" target="_blank">켄싱턴호텔앤리조트, '농장 체험' 테마 패키지 선봬</a></td>
+            <td class="table-source">서울와이어</td>
+            <td class="table-source">30점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">16위</span></td>
+            <td class="table-title"><a href="https://biz.chosun.com/distribution/food/2026/01/06/L4MJYIDA3VGVVKRPZXNKKUSUJA/" target="_blank">커피부터 호텔 뷔페까지…먹을거리 물가 새해부터 ‘줄인상’ - 조선비즈</a></td>
+            <td class="table-source">Chosunb..</td>
+            <td class="table-source">15점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">17위</span></td>
+            <td class="table-title"><a href="https://www.gukjenews.com/news/articleView.html?idxno=3474470" target="_blank">클럽메드, 프리미엄 가족여행 리조트 혜택 확대</a></td>
+            <td class="table-source">국제뉴스</td>
+            <td class="table-source">15점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">18위</span></td>
+            <td class="table-title"><a href="https://www.lcnews.co.kr/news/articleView.html?idxno=120566" target="_blank">한국관광공사, ‘2026 관광플러스테크’ 참여기업 모집</a></td>
+            <td class="table-source">라이센스뉴스</td>
+            <td class="table-source">12점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">19위</span></td>
+            <td class="table-title"><a href="http://www.dynews.co.kr/news/articleView.html?idxno=833964" target="_blank">이관표 단양관광공사 사장</a></td>
+            <td class="table-source">동양일보</td>
+            <td class="table-source">12점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">20위</span></td>
+            <td class="table-title"><a href="https://www.kyeonggi.com/article/20260106580281" target="_blank">파라다이스 호텔앤리조트, 2026년 ‘멤버스데이’ 프로모션 운영</a></td>
+            <td class="table-source">경기일보</td>
+            <td class="table-source">30점</td>
+        </tr>
+</table>
+    <div class="footer">
+        <p>이 페이지는 ONDA 뉴스 수집 시스템에서 자동으로 생성되었습니다.</p>
+        <p>🤖 Powered by AI News Scraper</p>
     </div>
 </body>
 </html>
