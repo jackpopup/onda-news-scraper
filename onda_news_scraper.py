@@ -2208,23 +2208,31 @@ def main():
         ai_selected = sum(1 for a in top3_articles if a.get('ai_selected', False))
         print(f"   -> AI 선정 {ai_selected}개 완료")
 
-    # 7. TOP 3 짧은 요약 생성 (60-100자)
+    # 7. TOP 20 짧은 요약 생성 (60-100자) - 이모지 선택 시스템을 위해 전체 기사에 요약 필요
     if not args.silent:
-        print("[5단계] TOP 3 기사 요약 생성 중...")
+        print("[5단계] TOP 20 기사 요약 생성 중...")
 
-    for idx, article in enumerate(top3_articles, 1):
+    for idx, article in enumerate(top_articles[:20], 1):
         if not args.silent:
-            print(f"   [{idx}/3] {article['title'][:30]}... 요약 중")
+            print(f"   [{idx}/20] {article['title'][:30]}... 요약 중")
         # AI 에디터가 이미 요약했으면 스킵, 아니면 생성
         if not article.get('ai_summary'):
             article['short_summary'] = generate_short_summary(article, max_chars=100)
         else:
             article['short_summary'] = article['ai_summary']
+
+        # short_summary가 비어있으면 원본 summary 또는 제목 사용
+        if not article.get('short_summary'):
+            if article.get('summary'):
+                article['short_summary'] = article['summary'][:100]
+            else:
+                article['short_summary'] = article['title'][:100]
+
         # 기존 호환성을 위해 detailed_summary도 설정
         article['detailed_summary'] = article['short_summary']
 
     if not args.silent:
-        print(f"   -> TOP 3 요약 완료\n")
+        print(f"   -> TOP 20 요약 완료\n")
 
     # top_articles에 top3 반영 (이메일 등에서 사용)
     for i, article in enumerate(top3_articles):
