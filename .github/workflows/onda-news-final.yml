@@ -31,7 +31,7 @@ jobs:
           path: .
         continue-on-error: true
 
-      - name: Check emoji selections and send final
+      - name: Check emoji, reorder articles, regenerate HTML, and send final
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
@@ -40,7 +40,7 @@ jobs:
           import json
           import os
           from datetime import datetime, timezone, timedelta
-          from slack_sender import get_starred_articles, send_final_news
+          from slack_sender import get_starred_articles, send_final_news, generate_news_html_page
 
           # draft_info.json 확인
           try:
@@ -51,6 +51,9 @@ jobs:
               print('draft_info.json not found - 오늘 아침 발송된 기사가 없습니다')
               exit(0)
 
+          articles = draft_info.get('articles', [])
+          print(f'총 기사 수: {len(articles)}')
+
           # 이모지 선택 확인
           starred = get_starred_articles(
               channel_id=os.environ.get('SLACK_CHANNEL_ID'),
@@ -58,12 +61,29 @@ jobs:
           )
           print(f'선택된 기사 인덱스: {starred}')
 
-          # GitHub Pages URL 생성
+          # 선택된 기사가 있으면 순서 재정렬
+          if starred and len(starred) > 0:
+              # 선택된 기사를 맨 앞으로
+              selected_articles = [articles[i] for i in starred if i < len(articles)]
+              remaining_indices = [i for i in range(len(articles)) if i not in starred]
+              remaining_articles = [articles[i] for i in remaining_indices]
+              reordered_articles = selected_articles + remaining_articles
+              print(f'기사 순서 재정렬 완료: TOP {len(selected_articles)}개 에디터 선정')
+          else:
+              reordered_articles = articles
+              print('에디터 선정 없음 - AI 자동 선정 순서 유지')
+
+          # HTML 재생성 (news_pages 폴더에)
           kst = timezone(timedelta(hours=9))
           today = datetime.now(kst).strftime('%Y-%m-%d')
+
+          html_path, html_filename = generate_news_html_page(reordered_articles, output_dir='news_pages')
+          print(f'HTML 재생성 완료: {html_path}')
+
+          # GitHub Pages URL
           full_news_url = f'https://jackpopup.github.io/onda-news-scraper/{today}.html'
 
-          # 최종 발송
+          # 최종 Slack 발송
           result = send_final_news(
               top3_indices=starred if starred else None,
               channel_id=os.environ.get('SLACK_CHANNEL_ID'),
@@ -78,3 +98,32 @@ jobs:
               print(f'최종 발송 실패: {result.get(\"message\")}')
               exit(1)
           "
+
+      - name: Upload updated HTML to GitHub Pages
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          TODAY=$(TZ=Asia/Seoul date +%Y-%m-%d)
+          HTML_FILE=$(ls -t news_pages/*.html 2>/dev/null | head -1)
+
+          if [ -z "$HTML_FILE" ]; then
+            echo "No HTML file found"
+            exit 0
+          fi
+
+          echo "Uploading updated $HTML_FILE to GitHub Pages..."
+
+          # Clone the pages repo
+          git clone https://${GH_TOKEN}@github.com/jackpopup/onda-news-scraper.git /tmp/pages-repo
+
+          # Copy updated HTML (overwrite)
+          cp "$HTML_FILE" "/tmp/pages-repo/${TODAY}.html"
+          cp "$HTML_FILE" "/tmp/pages-repo/index.html"
+
+          # Commit and push
+          cd /tmp/pages-repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update news with editor selection: ${TODAY}" || echo "No changes to commit"
+          git push || echo "Push failed"
