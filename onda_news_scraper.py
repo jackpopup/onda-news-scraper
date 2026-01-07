@@ -2290,7 +2290,19 @@ def main():
 
         return
 
-    # 8. 콘솔 출력
+    # 8. latest_news.json 저장 (GitHub Actions용)
+    import json as json_module
+    latest_news_data = {
+        'top_3': top_articles[:3],
+        'top_20': top_articles[:20],
+        'scraped_at': datetime.now().isoformat()
+    }
+    with open('latest_news.json', 'w', encoding='utf-8') as f:
+        json_module.dump(latest_news_data, f, ensure_ascii=False, indent=2)
+    if not args.silent:
+        print(f"   -> latest_news.json 저장 완료")
+
+    # 9. 콘솔 출력
     print("\n" + "=" * 80)
     print("ONDA 뉴스 브리핑 - TOP 10")
     print("=" * 80)
