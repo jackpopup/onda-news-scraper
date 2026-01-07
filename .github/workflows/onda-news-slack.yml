@@ -27,7 +27,6 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
-        working-directory: scraping
         run: |
           python onda_news_scraper.py
 
@@ -35,7 +34,6 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
-        working-directory: scraping
         run: |
           python -c "
           import json
@@ -84,7 +82,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          cd scraping/news_pages
+          cd news_pages
           TODAY=$(date +%Y-%m-%d)
           HTML_FILE=$(ls -t *.html 2>/dev/null | head -1)
 
