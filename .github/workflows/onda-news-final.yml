@@ -1,0 +1,80 @@
+name: ONDA News Final (08:00)
+
+on:
+  schedule:
+    # 매일 아침 8시 (KST) = UTC 23:00 (전날)
+    - cron: '0 23 * * *'
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  send-final:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Download draft info from morning workflow
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: onda-news-morning.yml
+          name: draft-info
+          path: .
+        continue-on-error: true
+
+      - name: Check emoji selections and send final
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        run: |
+          python -c "
+          import json
+          import os
+          from datetime import datetime, timezone, timedelta
+          from slack_sender import get_starred_articles, send_final_news
+
+          # draft_info.json 확인
+          try:
+              with open('draft_info.json', 'r', encoding='utf-8') as f:
+                  draft_info = json.load(f)
+              print('draft_info.json 로드 성공')
+          except FileNotFoundError:
+              print('draft_info.json not found - 오늘 아침 발송된 기사가 없습니다')
+              exit(0)
+
+          # 이모지 선택 확인
+          starred = get_starred_articles(
+              channel_id=os.environ.get('SLACK_CHANNEL_ID'),
+              bot_token=os.environ.get('SLACK_BOT_TOKEN')
+          )
+          print(f'선택된 기사 인덱스: {starred}')
+
+          # GitHub Pages URL 생성
+          kst = timezone(timedelta(hours=9))
+          today = datetime.now(kst).strftime('%Y-%m-%d')
+          full_news_url = f'https://jackpopup.github.io/onda-news-scraper/{today}.html'
+
+          # 최종 발송
+          result = send_final_news(
+              top3_indices=starred if starred else None,
+              channel_id=os.environ.get('SLACK_CHANNEL_ID'),
+              bot_token=os.environ.get('SLACK_BOT_TOKEN'),
+              full_news_url=full_news_url
+          )
+
+          if result['success']:
+              print(f'최종 발송 성공! {result.get(\"selection_note\")}')
+              print(f'TOP 3 인덱스: {result.get(\"top3_indices\")}')
+          else:
+              print(f'최종 발송 실패: {result.get(\"message\")}')
+              exit(1)
+          "

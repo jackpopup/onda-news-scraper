@@ -1,4 +1,4 @@
-name: ONDA News Daily Slack
+name: ONDA News Morning (06:00)
 
 on:
   schedule:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # 수동 실행 가능
 
 jobs:
-  send-news:
+  send-draft:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,13 +24,10 @@ jobs:
           pip install requests beautifulsoup4
 
       - name: Run ONDA News Scraper
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         run: |
           python onda_news_scraper.py
 
-      - name: Send to Slack
+      - name: Generate HTML and Send Draft to Slack
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
@@ -38,41 +35,31 @@ jobs:
           python -c "
           import json
           import os
-          from slack_sender import send_to_slack_via_bot, generate_news_html_page
+          from slack_sender import send_draft_articles, generate_news_html_page
 
           # latest_news.json 로드
           with open('latest_news.json', 'r', encoding='utf-8') as f:
               data = json.load(f)
 
-          top_3 = data.get('top_3', [])
           top_20 = data.get('top_20', [])
 
-          # HTML 생성
-          result = generate_news_html_page(top_20)
-          html_path = result[0] if isinstance(result, tuple) else result
+          if not top_20:
+              print('No articles found')
+              exit(1)
+
+          # HTML 페이지 생성
+          html_path, html_filename = generate_news_html_page(top_20)
           print(f'HTML 생성: {html_path}')
 
-          # GitHub Pages URL (Actions에서는 푸시 생략, 나중에 수동 또는 별도 처리)
-          from datetime import datetime
-          today = datetime.now().strftime('%Y-%m-%d')
-          full_news_url = f'https://jackpopup.github.io/onda-news-scraper/{today}.html'
-
-          # Slack 발송
-          result = send_to_slack_via_bot(
-              articles=top_3,
-              channel_id=os.environ.get('SLACK_CHANNEL_ID', 'C0A7D41B3ED'),
-              bot_token=os.environ.get('SLACK_BOT_TOKEN'),
-              is_draft=True,
-              full_news_url=full_news_url
+          # 20개 기사를 Slack에 발송 (이모지 선택용)
+          result = send_draft_articles(
+              articles=top_20,
+              channel_id=os.environ.get('SLACK_CHANNEL_ID'),
+              bot_token=os.environ.get('SLACK_BOT_TOKEN')
           )
 
           if result['success']:
-              print(f'Slack 발송 성공! thread_ts: {result.get(\"thread_ts\")}')
-              # thread_ts 저장
-              data['thread_ts'] = result.get('thread_ts')
-              data['full_news_url'] = full_news_url
-              with open('latest_news.json', 'w', encoding='utf-8') as f:
-                  json.dump(data, f, ensure_ascii=False, indent=2)
+              print(f'Slack 발송 성공! {len(result.get(\"message_ts_list\", []))}개 기사')
           else:
               print(f'Slack 발송 실패: {result.get(\"message\")}')
               exit(1)
@@ -82,9 +69,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          cd news_pages
-          TODAY=$(date +%Y-%m-%d)
-          HTML_FILE=$(ls -t *.html 2>/dev/null | head -1)
+          TODAY=$(TZ=Asia/Seoul date +%Y-%m-%d)
+          HTML_FILE=$(ls -t news_pages/*.html 2>/dev/null | head -1)
 
           if [ -z "$HTML_FILE" ]; then
             echo "No HTML file found"
@@ -107,3 +93,12 @@ jobs:
           git add .
           git commit -m "Daily news update: ${TODAY}" || echo "No changes to commit"
           git push || echo "Push failed"
+
+      - name: Save artifacts for final workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: draft-info
+          path: |
+            draft_info.json
+            latest_news.json
+          retention-days: 1
