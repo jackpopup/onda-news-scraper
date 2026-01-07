@@ -34,6 +34,7 @@ def get_channel_id(channel_id=None):
 def generate_news_html_page(articles, output_dir=None, filename=None):
     """
     20개 전체 뉴스를 보여주는 HTML 페이지 생성
+    3단계 레이아웃: TOP 3 상세 카드 / 4-10위 2열 그리드 / 11-20위 테이블
 
     Returns:
         tuple: (파일 경로, 파일명)
@@ -59,29 +60,57 @@ def generate_news_html_page(articles, output_dir=None, filename=None):
 
     output_path = os.path.join(output_dir, filename)
 
-    # TOP 3 카드
+    # TOP 3 상세 카드
     top3_html = ""
-    for i, article in enumerate(articles[:3], 1):
-        medal = ["🥇", "🥈", "🥉"][i-1]
-        summary = article.get('short_summary', article.get('summary', ''))[:100]
+    rank_badges = ["1st", "2nd", "3rd"]
+    rank_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
+    for i, article in enumerate(articles[:3]):
+        summary = article.get('short_summary', article.get('summary', ''))[:150]
+        category = article.get('category', '')
         top3_html += f"""
         <div class="top-card">
-            <div class="rank">{medal} {i}위</div>
-            <h3><a href="{article.get('link', '#')}" target="_blank">{article.get('title', '')}</a></h3>
-            <p class="summary">{summary}</p>
-            <div class="meta">{article.get('source', '')} | {article.get('category', '')}</div>
+            <div class="card-header">
+                <span class="rank-badge" style="background: {rank_colors[i]};">{rank_badges[i]}</span>
+                <span class="category-tag">{category}</span>
+            </div>
+            <h3 class="card-title">
+                <a href="{article.get('link', '#')}" target="_blank">{article.get('title', '')}</a>
+            </h3>
+            <p class="card-summary">{summary}</p>
+            <div class="card-meta">
+                <span>출처: {article.get('source', '')}</span>
+                <span>점수: {article.get('score', 0)}점</span>
+            </div>
+            <a href="{article.get('link', '#')}" target="_blank" class="read-more">기사 원문 보기 →</a>
         </div>
         """
 
-    # 4~20위 테이블
+    # 4-10위 2열 그리드
+    grid_html = ""
+    for i, article in enumerate(articles[3:10], 4):
+        category = article.get('category', '')
+        grid_html += f"""
+        <div class="grid-card">
+            <div class="grid-rank">{i}위</div>
+            <span class="grid-category">{category}</span>
+            <h4 class="grid-title">
+                <a href="{article.get('link', '#')}" target="_blank">{article.get('title', '')}</a>
+            </h4>
+            <div class="grid-meta">{article.get('source', '')} | 점수: {article.get('score', 0)}점</div>
+        </div>
+        """
+
+    # 11-20위 테이블
     table_rows = ""
-    for i, article in enumerate(articles[3:20], 4):
+    for i, article in enumerate(articles[10:20], 11):
         table_rows += f"""
         <tr>
-            <td class="rank-cell">{i}</td>
-            <td><a href="{article.get('link', '#')}" target="_blank">{article.get('title', '')}</a></td>
-            <td>{article.get('source', '')}</td>
-            <td>{article.get('category', '')}</td>
+            <td class="rank-cell">{i}위</td>
+            <td class="title-cell">
+                <a href="{article.get('link', '#')}" target="_blank">{article.get('title', '')}</a>
+            </td>
+            <td class="source-cell">{article.get('source', '')}</td>
+            <td class="score-cell">{article.get('score', 0)}점</td>
         </tr>
         """
 
@@ -92,134 +121,272 @@ def generate_news_html_page(articles, output_dir=None, filename=None):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ONDA 뉴스 브리핑 - {date_str}</title>
     <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
         body {{
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
             line-height: 1.6;
             color: #333;
+            background: #f5f7fa;
+        }}
+        .container {{
             max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            background: #f5f5f5;
         }}
+
+        /* 헤더 */
         .header {{
-            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
             color: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
+            padding: 30px;
             text-align: center;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(26,35,126,0.3);
         }}
-        .header h1 {{ margin: 0; font-size: 24px; }}
-        .header p {{ margin: 8px 0 0 0; opacity: 0.9; font-size: 13px; }}
-        .section-title {{
-            background: #1a237e;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin: 20px 0 15px 0;
-            font-size: 16px;
-        }}
-        .top-card {{
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .top-card .rank {{
-            color: #1a237e;
-            font-weight: bold;
-            font-size: 14px;
+        .header h1 {{
+            font-size: 28px;
+            font-weight: 700;
             margin-bottom: 8px;
         }}
-        .top-card h3 {{
-            margin: 0 0 10px 0;
-            font-size: 18px;
+        .header .subtitle {{
+            font-size: 14px;
+            opacity: 0.9;
         }}
-        .top-card h3 a {{
+
+        /* 섹션 타이틀 */
+        .section-title {{
+            background: linear-gradient(90deg, #1a237e 0%, #3949ab 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 25px 0 20px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }}
+
+        /* TOP 3 카드 */
+        .top-card {{
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid #1a237e;
+        }}
+        .card-header {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }}
+        .rank-badge {{
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }}
+        .category-tag {{
+            background: #e8eaf6;
+            color: #3949ab;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }}
+        .card-title {{
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }}
+        .card-title a {{
+            color: #1a237e;
+            text-decoration: none;
+        }}
+        .card-title a:hover {{
+            text-decoration: underline;
+        }}
+        .card-summary {{
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }}
+        .card-meta {{
+            display: flex;
+            gap: 20px;
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }}
+        .read-more {{
+            display: inline-block;
+            color: #1a237e;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }}
+        .read-more:hover {{
+            text-decoration: underline;
+        }}
+
+        /* 4-10위 그리드 */
+        .grid-container {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }}
+        .grid-card {{
+            background: white;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }}
+        .grid-rank {{
+            display: inline-block;
+            background: #1a237e;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }}
+        .grid-category {{
+            display: inline-block;
+            background: #e8eaf6;
+            color: #3949ab;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }}
+        .grid-title {{
+            font-size: 14px;
+            font-weight: 600;
+            margin: 10px 0;
+            line-height: 1.4;
+        }}
+        .grid-title a {{
             color: #333;
             text-decoration: none;
         }}
-        .top-card h3 a:hover {{
+        .grid-title a:hover {{
             color: #1a237e;
-            text-decoration: underline;
         }}
-        .top-card .summary {{
-            color: #666;
-            font-size: 14px;
-            margin: 0 0 10px 0;
-        }}
-        .top-card .meta {{
-            color: #999;
+        .grid-meta {{
+            color: #888;
             font-size: 12px;
+        }}
+
+        /* 11-20위 테이블 */
+        .table-container {{
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }}
         table {{
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        th, td {{
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
         }}
         th {{
             background: #f8f9fa;
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 13px;
             font-weight: 600;
-            color: #333;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }}
+        td {{
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }}
+        tr:hover {{
+            background: #fafafa;
         }}
         .rank-cell {{
-            width: 40px;
-            text-align: center;
-            font-weight: bold;
+            width: 60px;
+            font-weight: 600;
             color: #1a237e;
         }}
-        td a {{
+        .title-cell a {{
             color: #333;
             text-decoration: none;
         }}
-        td a:hover {{
+        .title-cell a:hover {{
             color: #1a237e;
-            text-decoration: underline;
         }}
+        .source-cell {{
+            width: 100px;
+            color: #888;
+        }}
+        .score-cell {{
+            width: 70px;
+            color: #888;
+            text-align: right;
+        }}
+
+        /* 푸터 */
         .footer {{
             text-align: center;
             color: #999;
             font-size: 12px;
-            margin-top: 30px;
+            margin-top: 40px;
             padding: 20px;
+        }}
+
+        /* 반응형 */
+        @media (max-width: 600px) {{
+            .grid-container {{
+                grid-template-columns: 1fr;
+            }}
+            .card-meta {{
+                flex-direction: column;
+                gap: 5px;
+            }}
         }}
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>ONDA 뉴스 브리핑</h1>
-        <p>{date_str} | B2B Hospitality Tech</p>
-    </div>
+    <div class="container">
+        <div class="header">
+            <h1>ONDA 뉴스 브리핑</h1>
+            <p class="subtitle">B2B Hospitality Tech | {date_str} | TOP 20</p>
+        </div>
 
-    <div class="section-title">TOP 3 주요 뉴스</div>
-    {top3_html}
+        <div class="section-title">TOP 3 주요 뉴스</div>
+        {top3_html}
 
-    <div class="section-title">4~20위 뉴스</div>
-    <table>
-        <thead>
-            <tr>
-                <th>순위</th>
-                <th>제목</th>
-                <th>출처</th>
-                <th>분류</th>
-            </tr>
-        </thead>
-        <tbody>
-            {table_rows}
-        </tbody>
-    </table>
+        <div class="section-title">4-10위 뉴스</div>
+        <div class="grid-container">
+            {grid_html}
+        </div>
 
-    <div class="footer">
-        ONDA News Scraper | 자동 생성된 뉴스 브리핑
+        <div class="section-title">11-20위 뉴스</div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>순위</th>
+                        <th>제목</th>
+                        <th>출처</th>
+                        <th>점수</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {table_rows}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            이 페이지는 ONDA 뉴스 수집 시스템에서 자동으로 생성되었습니다.<br>
+            Powered by AI News Scraper
+        </div>
     </div>
 </body>
 </html>"""
