@@ -5,274 +5,473 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ONDA 뉴스 브리핑 - 2026년 01월 07일</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
             line-height: 1.6;
             color: #333;
+            background: #f5f7fa;
+        }
+        .container {
             max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            background: #f5f5f5;
         }
+
+        /* 헤더 */
         .header {
-            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
             color: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
+            padding: 30px;
             text-align: center;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(26,35,126,0.3);
         }
-        .header h1 { margin: 0; font-size: 24px; }
-        .header p { margin: 8px 0 0 0; opacity: 0.9; font-size: 13px; }
-        .section-title {
-            background: #1a237e;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin: 20px 0 15px 0;
-            font-size: 16px;
-        }
-        .top-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .top-card .rank {
-            color: #1a237e;
-            font-weight: bold;
-            font-size: 14px;
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
             margin-bottom: 8px;
         }
-        .top-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 18px;
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
         }
-        .top-card h3 a {
+
+        /* 섹션 타이틀 */
+        .section-title {
+            background: linear-gradient(90deg, #1a237e 0%, #3949ab 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 25px 0 20px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* TOP 3 카드 */
+        .top-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid #1a237e;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .rank-badge {
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .category-tag {
+            background: #e8eaf6;
+            color: #3949ab;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .card-title a {
+            color: #1a237e;
+            text-decoration: none;
+        }
+        .card-title a:hover {
+            text-decoration: underline;
+        }
+        .card-summary {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        .card-meta {
+            display: flex;
+            gap: 20px;
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .read-more {
+            display: inline-block;
+            color: #1a237e;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        /* 4-10위 그리드 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .grid-card {
+            background: white;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .grid-rank {
+            display: inline-block;
+            background: #1a237e;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .grid-category {
+            display: inline-block;
+            background: #e8eaf6;
+            color: #3949ab;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        .grid-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 10px 0;
+            line-height: 1.4;
+        }
+        .grid-title a {
             color: #333;
             text-decoration: none;
         }
-        .top-card h3 a:hover {
+        .grid-title a:hover {
             color: #1a237e;
-            text-decoration: underline;
         }
-        .top-card .summary {
-            color: #666;
-            font-size: 14px;
-            margin: 0 0 10px 0;
-        }
-        .top-card .meta {
-            color: #999;
+        .grid-meta {
+            color: #888;
             font-size: 12px;
+        }
+
+        /* 11-20위 테이블 */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
         }
         th {
             background: #f8f9fa;
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 13px;
             font-weight: 600;
-            color: #333;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+        tr:hover {
+            background: #fafafa;
         }
         .rank-cell {
-            width: 40px;
-            text-align: center;
-            font-weight: bold;
+            width: 60px;
+            font-weight: 600;
             color: #1a237e;
         }
-        td a {
+        .title-cell a {
             color: #333;
             text-decoration: none;
         }
-        td a:hover {
+        .title-cell a:hover {
             color: #1a237e;
-            text-decoration: underline;
         }
+        .source-cell {
+            width: 100px;
+            color: #888;
+        }
+        .score-cell {
+            width: 70px;
+            color: #888;
+            text-align: right;
+        }
+
+        /* 푸터 */
         .footer {
             text-align: center;
             color: #999;
             font-size: 12px;
-            margin-top: 30px;
+            margin-top: 40px;
             padding: 20px;
+        }
+
+        /* 반응형 */
+        @media (max-width: 600px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+            .card-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>ONDA 뉴스 브리핑</h1>
-        <p>2026년 01월 07일 | B2B Hospitality Tech</p>
-    </div>
+    <div class="container">
+        <div class="header">
+            <h1>ONDA 뉴스 브리핑</h1>
+            <p class="subtitle">B2B Hospitality Tech | 2026년 01월 07일 | TOP 20</p>
+        </div>
 
-    <div class="section-title">TOP 3 주요 뉴스</div>
-    
+        <div class="section-title">TOP 3 주요 뉴스</div>
+        
         <div class="top-card">
-            <div class="rank">🥇 1위</div>
-            <h3><a href="https://www.sukbakmagazine.com/news/articleView.html?idxno=67156" target="_blank">공정위, 마이리얼트립에 시정명령 및 과태료 부과</a></h3>
-            <p class="summary">이에 공정위는 마이리얼트립에 시정명령과 함께 과태료 50만원을 부과하기로 결정했다고 밝혔다.</p>
-            <div class="meta">숙박매거진 | OTA/플랫폼</div>
+            <div class="card-header">
+                <span class="rank-badge" style="background: #FFD700;">1st</span>
+                <span class="category-tag">정책/규제</span>
+            </div>
+            <h3 class="card-title">
+                <a href="http://www.newsworker.co.kr/news/articleViewAmp.html?idxno=409426" target="_blank">방 1개만 있어도 영업신고 가능...규제샌드박스 타고 숙박업·호텔 새 판 짜기 돌입</a>
+            </h3>
+            <p class="card-summary">이르면 올봄부터 생활형 숙박시설(생숙)을 1객실만 있다면 온라인 플랫폼을 통해 합법적으로 숙박업을 할 수 있게 된다.</p>
+            <div class="card-meta">
+                <span>출처: 뉴스워커</span>
+                <span>점수: 42점</span>
+            </div>
+            <a href="http://www.newsworker.co.kr/news/articleViewAmp.html?idxno=409426" target="_blank" class="read-more">기사 원문 보기 →</a>
         </div>
         
         <div class="top-card">
-            <div class="rank">🥈 2위</div>
-            <h3><a href="http://www.newsworker.co.kr/news/articleViewAmp.html?idxno=409426" target="_blank">방 1개만 있어도 영업신고 가능...규제샌드박스 타고 숙박업·호텔 새 판 짜기 돌입</a></h3>
-            <p class="summary">이르면 올봄부터 생활형 숙박시설(생숙)을 1객실만 있다면 온라인 플랫폼을 통해 합법적으로 숙박업을 할 수 있게 된다.</p>
-            <div class="meta">뉴스워커 | 정책/규제</div>
+            <div class="card-header">
+                <span class="rank-badge" style="background: #C0C0C0;">2nd</span>
+                <span class="category-tag">숙박업계</span>
+            </div>
+            <h3 class="card-title">
+                <a href="https://www.fntimes.com/html/view.php?ud=202601071112381945b5b890e35c_18" target="_blank">한한령 해제 물꼬…무신사·호텔신라·CU, 중국으로 간다</a>
+            </h3>
+            <p class="card-summary"></p>
+            <div class="card-meta">
+                <span>출처: 한국금융신문</span>
+                <span>점수: 15점</span>
+            </div>
+            <a href="https://www.fntimes.com/html/view.php?ud=202601071112381945b5b890e35c_18" target="_blank" class="read-more">기사 원문 보기 →</a>
         </div>
         
         <div class="top-card">
-            <div class="rank">🥉 3위</div>
-            <h3><a href="https://biz.newdaily.co.kr/site/data/html/2026/01/07/2026010700027.html" target="_blank">[Daily New유통] 무신사, 여기어때, 정관장 外</a></h3>
-            <p class="summary">CU가 노티드와 손잡고 이번에 내놓는 상품은 행운과 건강을 콘셉트로 만든 말차 만쥬 1종과 케이크바 2종이다.</p>
-            <div class="meta">뉴데일리 경제 | OTA/플랫폼</div>
+            <div class="card-header">
+                <span class="rank-badge" style="background: #CD7F32;">3rd</span>
+                <span class="category-tag">정책/규제</span>
+            </div>
+            <h3 class="card-title">
+                <a href="https://www.etoday.co.kr/news/view/2543253" target="_blank">‘2년 공석’ 채운 박성혁 한국관광공사 사장⋯“외래 관광객 3000만명 달성할 것”</a>
+            </h3>
+            <p class="card-summary"></p>
+            <div class="card-meta">
+                <span>출처: 이투데이</span>
+                <span>점수: 12점</span>
+            </div>
+            <a href="https://www.etoday.co.kr/news/view/2543253" target="_blank" class="read-more">기사 원문 보기 →</a>
         </div>
         
 
-    <div class="section-title">4~20위 뉴스</div>
-    <table>
-        <thead>
-            <tr>
-                <th>순위</th>
-                <th>제목</th>
-                <th>출처</th>
-                <th>분류</th>
-            </tr>
-        </thead>
-        <tbody>
+        <div class="section-title">4-10위 뉴스</div>
+        <div class="grid-container">
             
-        <tr>
-            <td class="rank-cell">4</td>
-            <td><a href="https://www.sukbakmagazine.com/news/articleView.html?idxno=67159" target="_blank">부킹닷컴, 2026 월별 아시아 여행 가이드 발간</a></td>
-            <td>숙박매거진</td>
-            <td>OTA/플랫폼</td>
-        </tr>
+        <div class="grid-card">
+            <div class="grid-rank">4위</div>
+            <span class="grid-category">OTA/플랫폼</span>
+            <h4 class="grid-title">
+                <a href="https://www.sukbakmagazine.com/news/articleView.html?idxno=67156" target="_blank">공정위, 마이리얼트립에 시정명령 및 과태료 부과</a>
+            </h4>
+            <div class="grid-meta">숙박매거진 | 점수: 25점</div>
+        </div>
         
-        <tr>
-            <td class="rank-cell">5</td>
-            <td><a href="https://www.womennews.co.kr/news/articleView.html?idxno=271735" target="_blank">육아휴직 양극화 여전...음식·숙박업 30%만 ‘자유롭게 사용’</a></td>
-            <td>여성신문</td>
-            <td>숙박업계</td>
-        </tr>
+        <div class="grid-card">
+            <div class="grid-rank">5위</div>
+            <span class="grid-category">OTA/플랫폼</span>
+            <h4 class="grid-title">
+                <a href="https://biz.newdaily.co.kr/site/data/html/2026/01/07/2026010700027.html" target="_blank">[Daily New유통] 무신사, 여기어때, 정관장 外</a>
+            </h4>
+            <div class="grid-meta">뉴데일리 경제 | 점수: 25점</div>
+        </div>
         
-        <tr>
-            <td class="rank-cell">6</td>
-            <td><a href="https://www.newspim.com/news/view/20260106000869" target="_blank">[르포] "숙박업 풀어도 답 없다"...반달섬 생활형숙박시설 ′유령도시′ 우려</a></td>
-            <td>뉴스핌</td>
-            <td>숙박업계</td>
-        </tr>
+        <div class="grid-card">
+            <div class="grid-rank">6위</div>
+            <span class="grid-category">OTA/플랫폼</span>
+            <h4 class="grid-title">
+                <a href="https://www.sukbakmagazine.com/news/articleView.html?idxno=67159" target="_blank">부킹닷컴, 2026 월별 아시아 여행 가이드 발간</a>
+            </h4>
+            <div class="grid-meta">숙박매거진 | 점수: 25점</div>
+        </div>
         
-        <tr>
-            <td class="rank-cell">7</td>
-            <td><a href="https://www.sukbakmagazine.com/news/articleView.html?idxno=67142" target="_blank">생숙 1객실 숙박업 허용, 규제샌드박스 승인</a></td>
-            <td>숙박매거진</td>
-            <td>정책/규제</td>
-        </tr>
+        <div class="grid-card">
+            <div class="grid-rank">7위</div>
+            <span class="grid-category">숙박업계</span>
+            <h4 class="grid-title">
+                <a href="https://www.womennews.co.kr/news/articleView.html?idxno=271735" target="_blank">육아휴직 양극화 여전...음식·숙박업 30%만 ‘자유롭게 사용’</a>
+            </h4>
+            <div class="grid-meta">여성신문 | 점수: 15점</div>
+        </div>
         
-        <tr>
-            <td class="rank-cell">8</td>
-            <td><a href="https://www.koreaeaglenews.com/news/articleView.html?idxno=94497" target="_blank">아고다 2025년 해외여행 결산…대한민국 여행객 인기 해외여행지 순위 공개</a></td>
-            <td>코리아이글뉴스</td>
-            <td>OTA/플랫폼</td>
-        </tr>
+        <div class="grid-card">
+            <div class="grid-rank">8위</div>
+            <span class="grid-category">숙박업계</span>
+            <h4 class="grid-title">
+                <a href="https://www.newspim.com/news/view/20260106000869" target="_blank">[르포] "숙박업 풀어도 답 없다"...반달섬 생활형숙박시설 ′유령도시′ 우려</a>
+            </h4>
+            <div class="grid-meta">뉴스핌 | 점수: 15점</div>
+        </div>
         
-        <tr>
-            <td class="rank-cell">9</td>
-            <td><a href="https://economist.co.kr/article/view/ecn202601060010" target="_blank">H2O호스피탈리티, 인니 최대 부동산 플랫폼 ‘마미코스’ 뚫었다… 1만 7천 객실 디지털 전환</a></td>
-            <td>이코노미스트</td>
-            <td>트래블테크</td>
-        </tr>
+        <div class="grid-card">
+            <div class="grid-rank">9위</div>
+            <span class="grid-category">정책/규제</span>
+            <h4 class="grid-title">
+                <a href="https://www.sukbakmagazine.com/news/articleView.html?idxno=67142" target="_blank">생숙 1객실 숙박업 허용, 규제샌드박스 승인</a>
+            </h4>
+            <div class="grid-meta">숙박매거진 | 점수: 52점</div>
+        </div>
         
-        <tr>
-            <td class="rank-cell">10</td>
-            <td><a href="https://www.seattlen.com/bbs/board.php?bo_table=hot&wr_id=57497&sca=%EA%B0%9C%EC%9D%B8%EA%B5%90%EC%8A%B5&sfl=mb_id%2C1&stx=washu" target="_blank">롯데호텔 시애틀 지분매각 절차 들어갔다 > 시애틀 뉴스/핫이슈</a></td>
-            <td>SeattleN</td>
-            <td>숙박업계</td>
-        </tr>
+        <div class="grid-card">
+            <div class="grid-rank">10위</div>
+            <span class="grid-category">OTA/플랫폼</span>
+            <h4 class="grid-title">
+                <a href="https://www.koreaeaglenews.com/news/articleView.html?idxno=94497" target="_blank">아고다 2025년 해외여행 결산…대한민국 여행객 인기 해외여행지 순위 공개</a>
+            </h4>
+            <div class="grid-meta">코리아이글뉴스 | 점수: 25점</div>
+        </div>
         
-        <tr>
-            <td class="rank-cell">11</td>
-            <td><a href="https://daily.hankooki.com/news/articleView.html?idxno=1318775" target="_blank">'면세업 부진 극복하자'…호텔업계, 위탁운영으로 해외사업 속도</a></td>
-            <td>데일리한국</td>
-            <td>숙박업계</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">12</td>
-            <td><a href="https://www.startupn.kr/news/articleView.html?idxno=55731" target="_blank">H2O호스피탈리티, 인도네시아 최대 임대 플랫폼 마미코스와 계약…1만7천 객실에 스마트 체크인</a></td>
-            <td>스타트업엔</td>
-            <td>트래블테크</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">13</td>
-            <td><a href="http://www.sukbakmagazine.com/news/articleView.html?idxno=67157" target="_blank">진안군, 2026년 농어촌민박 환경개선 지원사업 실시</a></td>
-            <td>숙박매거진</td>
-            <td>숙박업계</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">14</td>
-            <td><a href="https://www.munhwa.com/article/11559070" target="_blank">50만원 호텔 케이크 등장… “지나치다” vs “소비자 선택”</a></td>
-            <td>문화일보</td>
-            <td>숙박업계</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">15</td>
-            <td><a href="https://www.fntimes.com/html/view.php?ud=202601071112381945b5b890e35c_18" target="_blank">한한령 해제 물꼬…무신사·호텔신라·CU, 중국으로 간다</a></td>
-            <td>한국금융신문</td>
-            <td>숙박업계</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">16</td>
-            <td><a href="https://digitalchosun.dizzo.com/site/data/html_dir/2026/01/07/2026010780090.html" target="_blank">호텔신라, 2월 중국 시안에 신라모노그램 개장…글로벌 확장 시동</a></td>
-            <td>디지틀조선일보</td>
-            <td>숙박업계</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">17</td>
-            <td><a href="https://www.bloter.net/news/articleView.html?idxno=651143" target="_blank">금강공업, 금호리조트 아산 2차 모듈러 리조트 104억 수주</a></td>
-            <td>블로터</td>
-            <td>숙박업계</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">18</td>
-            <td><a href="https://www.etoday.co.kr/news/view/2543253" target="_blank">‘2년 공석’ 채운 박성혁 한국관광공사 사장⋯“외래 관광객 3000만명 달성할 것”</a></td>
-            <td>이투데이</td>
-            <td>정책/규제</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">19</td>
-            <td><a href="https://economist.co.kr/article/view/ecn202601070006" target="_blank">"아이 한 명에 제대로 쓴다"…특급호텔 돌잔치 수요 급증</a></td>
-            <td>이코노미스트</td>
-            <td>숙박업계</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">20</td>
-            <td><a href="https://www.kmib.co.kr/article/view_amp.asp?arcid=1767689867" target="_blank">아이 적어질수록 더 화려해진다… 특급호텔 돌잔치의 역설</a></td>
-            <td>국민일보</td>
-            <td>숙박업계</td>
-        </tr>
-        
-        </tbody>
-    </table>
+        </div>
 
-    <div class="footer">
-        ONDA News Scraper | 자동 생성된 뉴스 브리핑
+        <div class="section-title">11-20위 뉴스</div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>순위</th>
+                        <th>제목</th>
+                        <th>출처</th>
+                        <th>점수</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+        <tr>
+            <td class="rank-cell">11위</td>
+            <td class="title-cell">
+                <a href="https://economist.co.kr/article/view/ecn202601060010" target="_blank">H2O호스피탈리티, 인니 최대 부동산 플랫폼 ‘마미코스’ 뚫었다… 1만 7천 객실 디지털 전환</a>
+            </td>
+            <td class="source-cell">이코노미스트</td>
+            <td class="score-cell">35점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">12위</td>
+            <td class="title-cell">
+                <a href="https://www.seattlen.com/bbs/board.php?bo_table=hot&wr_id=57497&sca=%EA%B0%9C%EC%9D%B8%EA%B5%90%EC%8A%B5&sfl=mb_id%2C1&stx=washu" target="_blank">롯데호텔 시애틀 지분매각 절차 들어갔다 > 시애틀 뉴스/핫이슈</a>
+            </td>
+            <td class="source-cell">SeattleN</td>
+            <td class="score-cell">15점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">13위</td>
+            <td class="title-cell">
+                <a href="https://daily.hankooki.com/news/articleView.html?idxno=1318775" target="_blank">'면세업 부진 극복하자'…호텔업계, 위탁운영으로 해외사업 속도</a>
+            </td>
+            <td class="source-cell">데일리한국</td>
+            <td class="score-cell">15점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">14위</td>
+            <td class="title-cell">
+                <a href="https://www.startupn.kr/news/articleView.html?idxno=55731" target="_blank">H2O호스피탈리티, 인도네시아 최대 임대 플랫폼 마미코스와 계약…1만7천 객실에 스마트 체크인</a>
+            </td>
+            <td class="source-cell">스타트업엔</td>
+            <td class="score-cell">35점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">15위</td>
+            <td class="title-cell">
+                <a href="http://www.sukbakmagazine.com/news/articleView.html?idxno=67157" target="_blank">진안군, 2026년 농어촌민박 환경개선 지원사업 실시</a>
+            </td>
+            <td class="source-cell">숙박매거진</td>
+            <td class="score-cell">15점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">16위</td>
+            <td class="title-cell">
+                <a href="https://www.munhwa.com/article/11559070" target="_blank">50만원 호텔 케이크 등장… “지나치다” vs “소비자 선택”</a>
+            </td>
+            <td class="source-cell">문화일보</td>
+            <td class="score-cell">15점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">17위</td>
+            <td class="title-cell">
+                <a href="https://digitalchosun.dizzo.com/site/data/html_dir/2026/01/07/2026010780090.html" target="_blank">호텔신라, 2월 중국 시안에 신라모노그램 개장…글로벌 확장 시동</a>
+            </td>
+            <td class="source-cell">디지틀조선일보</td>
+            <td class="score-cell">15점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">18위</td>
+            <td class="title-cell">
+                <a href="https://www.bloter.net/news/articleView.html?idxno=651143" target="_blank">금강공업, 금호리조트 아산 2차 모듈러 리조트 104억 수주</a>
+            </td>
+            <td class="source-cell">블로터</td>
+            <td class="score-cell">15점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">19위</td>
+            <td class="title-cell">
+                <a href="https://economist.co.kr/article/view/ecn202601070006" target="_blank">"아이 한 명에 제대로 쓴다"…특급호텔 돌잔치 수요 급증</a>
+            </td>
+            <td class="source-cell">이코노미스트</td>
+            <td class="score-cell">15점</td>
+        </tr>
+        
+        <tr>
+            <td class="rank-cell">20위</td>
+            <td class="title-cell">
+                <a href="https://www.kmib.co.kr/article/view_amp.asp?arcid=1767689867" target="_blank">아이 적어질수록 더 화려해진다… 특급호텔 돌잔치의 역설</a>
+            </td>
+            <td class="source-cell">국민일보</td>
+            <td class="score-cell">15점</td>
+        </tr>
+        
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            이 페이지는 ONDA 뉴스 수집 시스템에서 자동으로 생성되었습니다.<br>
+            Powered by AI News Scraper
+        </div>
     </div>
 </body>
 </html>
