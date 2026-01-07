@@ -374,9 +374,12 @@ def get_starred_articles(channel_id=None, bot_token=None):
 
     starred_indices = []
 
+    print(f"[DEBUG] Checking {len(draft_info.get('message_ts_list', []))} messages for reactions...")
+
     # 각 메시지의 reactions 확인
     for msg_info in draft_info.get('message_ts_list', []):
         ts = msg_info.get('ts')
+        idx = msg_info.get('index')
 
         response = requests.get(
             'https://slack.com/api/reactions.get',
@@ -395,8 +398,13 @@ def get_starred_articles(channel_id=None, bot_token=None):
             # ⭐ (star) 이모지 확인
             for reaction in reactions:
                 if reaction.get('name') == 'star':
-                    starred_indices.append(msg_info.get('index'))
+                    print(f"[DEBUG] Found ⭐ on message index {idx}: {msg_info.get('title', '')[:30]}")
+                    starred_indices.append(idx)
                     break
+        else:
+            print(f"[DEBUG] API error for message {idx}: {result.get('error')}")
+
+    print(f"[DEBUG] Starred indices: {starred_indices}")
 
     # 최대 3개만 반환 (먼저 선택된 순서)
     return starred_indices[:3]
