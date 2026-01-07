@@ -642,13 +642,20 @@ def send_final_news(top3_indices=None, channel_id=None, bot_token=None, full_new
         source = article.get('source', '')
         category = article.get('category', '')
         link = article.get('link', article.get('url', '#'))
-        summary = article.get('short_summary', article.get('summary', ''))[:100]
+        summary = article.get('short_summary', '') or article.get('summary', '')
+        summary = summary[:100] if summary else ''
+
+        # 요약이 있으면 포함, 없으면 제목/출처만 표시
+        if summary:
+            text = f"{medals[i]} *<{link}|{title}>*\n_{source} | {category}_\n{summary}"
+        else:
+            text = f"{medals[i]} *<{link}|{title}>*\n_{source} | {category}_"
 
         blocks.append({
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"{medals[i]} *<{link}|{title}>*\n_{source} | {category}_\n{summary}"
+                "text": text
             }
         })
 
