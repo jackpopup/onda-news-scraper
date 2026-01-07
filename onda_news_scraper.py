@@ -17,7 +17,7 @@ import os
 import json
 from urllib.parse import quote
 from email_sender import create_onda_html_email, send_email_gmail
-from slack_sender import send_draft_for_review, send_final_to_client
+# Slack 발송은 워크플로우에서 직접 처리 (CLI 옵션 비활성화됨)
 
 # ============================================
 # 스크랩 히스토리 관리 (중복 기사 방지)
@@ -2262,32 +2262,10 @@ def main():
 
         return
 
-    # 8. Slack 발송 (옵션)
+    # 8. Slack 발송 - 워크플로우에서 직접 처리 (CLI 옵션 비활성화)
     if args.slack or args.slack_final:
-        if not args.silent:
-            mode = "초안 (검토용)" if args.slack else "최종본 (클라이언트용)"
-            print(f"[Slack] {mode} 발송 중...")
-
-        if args.slack:
-            result = send_draft_for_review(top_articles, webhook_url=args.slack_webhook)
-        else:
-            result = send_final_to_client(top_articles, webhook_url=args.slack_webhook)
-
-        if result['success']:
-            if not args.silent:
-                print(f"   -> {result['message']}")
-
-            # 최종본 발송 시에만 히스토리 저장
-            if args.slack_final and not args.no_history:
-                history = add_to_history(top_articles, history)
-                save_scrape_history(history)
-                if not args.silent:
-                    print(f"   -> 히스토리에 {len(top_articles)}개 기사 저장 완료\n")
-            else:
-                print(f"SUCCESS: Slack message sent")
-        else:
-            print(f"FAILED: {result['message']}")
-
+        print("NOTE: Slack 발송은 GitHub Actions 워크플로우에서 직접 처리됩니다.")
+        print("      onda-news-morning.yml / onda-news-final.yml 참조")
         return
 
     # 8. latest_news.json 저장 (GitHub Actions용)
