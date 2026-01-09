@@ -206,11 +206,12 @@ def filter_already_scraped(articles, history, silent=False):
 # 키워드 설정
 # ============================================
 
-# OTA 플랫폼 관련
+# OTA 플랫폼 관련 (핵심)
 OTA_KEYWORDS = [
     '아고다', '에어비앤비', '부킹닷컴', '트립닷컴', '익스피디아',
     '야놀자', '여기어때', '마이리얼트립', '호텔스닷컴', '호텔스컴바인',
-    '트립어드바이저', 'OTA', '온라인여행사'
+    '트립어드바이저', 'OTA', '온라인여행사', '클룩', '크몽트립',
+    '데일리호텔', '호텔타임', '호텔나우', '인터파크투어'
 ]
 
 # 숙박업 관련
@@ -222,13 +223,23 @@ ACCOMMODATION_KEYWORDS = [
 # 정부/정책 관련
 POLICY_KEYWORDS = [
     '관광공사', '관광재단', '문화체육관광부', '문체부', '관광진흥',
-    '숙박업법', '공유숙박', '생활숙박', '관광정책', '규제'
+    '숙박업법', '공유숙박', '생활숙박', '관광정책', '규제',
+    '국토교통부', '국토부', '공정거래위원회', '공정위'
 ]
 
-# 트래블테크/스타트업 관련
+# 트래블테크/스타트업 관련 (확장)
 TRAVELTECH_KEYWORDS = [
     '온다', 'ONDA', '트래블테크', '호스피탈리티', '여행테크',
-    '트립비토즈', '야놀자클라우드', '호텔솔루션', 'PMS', '채널매니저'
+    '트립비토즈', '야놀자클라우드', '호텔솔루션', 'PMS', '채널매니저',
+    '더휴식', '호텔온', '데이터드림', 'RMS', '레버니지', '객실관리',
+    '무인체크인', '스마트호텔', '호텔DX', '디지털전환'
+]
+
+# 글로벌 호텔 체인 (산업 동향용)
+HOTEL_CHAIN_KEYWORDS = [
+    '메리어트', '힐튼', '하얏트', 'IHG', '아코르', '윈덤',
+    '신라호텔', '롯데호텔', '조선호텔', '파라다이스', '한화리조트',
+    '베스트웨스턴', '라마다', '노보텔', '이비스'
 ]
 
 # AI/DX 관련
@@ -305,16 +316,87 @@ def is_non_news_source(url):
     return False
 
 
+# 홍보성/패키지 기사 필터링 키워드
+PROMOTIONAL_KEYWORDS = [
+    '패키지 출시', '패키지 선보여', '패키지 오픈', '프로모션 진행',
+    '할인 행사', '특가 이벤트', '얼리버드', '시즌 특가',
+    '무료 제공', '증정 행사', '경품', '추첨',
+    '협업 패키지', '콜라보 패키지', '제휴 이벤트',
+    '미쉐린 셰프 초청', '스페셜 디너', '와인 페어링',
+]
+
+# 낮은 가치 기사 패턴 (제목 기준)
+LOW_VALUE_PATTERNS = [
+    r'^\[.*사진\]',           # [사진] 으로 시작
+    r'^\[포토\]',             # [포토] 로 시작
+    r'호캉스.*추천',           # 호캉스 추천 기사
+    r'베스트.*호텔',           # 베스트 호텔 순위
+    r'인기.*숙소',             # 인기 숙소 추천
+    r'수상.*대상',             # OO 대상 수상
+    r'올해의.*아티클',         # 올해의 아티클
+    r'매거진.*대상',           # 매거진 대상
+]
+
+
+def is_promotional_article(article):
+    """
+    홍보성/프로모션 기사인지 확인
+    - 단순 패키지 출시, 프로모션 기사는 낮은 가치
+    - 단, 산업적 의미가 있는 서비스 출시는 포함
+    """
+    title = article.get('title', '').lower()
+    summary = article.get('summary', '').lower()
+    text = title + ' ' + summary
+
+    # 홍보성 키워드 체크
+    promo_count = 0
+    for keyword in PROMOTIONAL_KEYWORDS:
+        if keyword in text:
+            promo_count += 1
+
+    # 2개 이상 홍보 키워드 = 홍보성 기사
+    if promo_count >= 2:
+        return True
+
+    # 제목에 홍보 키워드가 있고, 산업적 의미가 없는 경우
+    if promo_count >= 1:
+        # 산업 의미 있는 키워드 (투자, M&A, 규제 등)
+        industry_keywords = ['투자', 'M&A', '인수', '규제', '정책', '시장', '점유율', '실적']
+        has_industry_context = any(kw in text for kw in industry_keywords)
+        if not has_industry_context:
+            return True
+
+    return False
+
+
+def is_low_value_article(article):
+    """
+    낮은 가치의 기사인지 확인 (제목 패턴 기반)
+    """
+    import re
+    title = article.get('title', '')
+
+    for pattern in LOW_VALUE_PATTERNS:
+        if re.search(pattern, title):
+            return True
+
+    return False
+
+
 def filter_non_news_and_old_articles(articles, silent=False):
     """
-    비뉴스 소스와 24시간 이상 된 기사 필터링
+    비뉴스 소스, 오래된 기사, 홍보성 기사 필터링
 
     - 브런치, 블로그 등 비뉴스 소스 제외
     - 24시간 이내 기사만 포함 (is_recent=True)
+    - 홍보성/패키지 기사 제외
+    - 낮은 가치 기사 제외
     """
     filtered = []
     non_news_count = 0
     old_count = 0
+    promo_count = 0
+    low_value_count = 0
 
     for article in articles:
         # 1. 비뉴스 소스 필터링
@@ -327,6 +409,16 @@ def filter_non_news_and_old_articles(articles, silent=False):
             old_count += 1
             continue
 
+        # 3. 홍보성 기사 필터링
+        if is_promotional_article(article):
+            promo_count += 1
+            continue
+
+        # 4. 낮은 가치 기사 필터링
+        if is_low_value_article(article):
+            low_value_count += 1
+            continue
+
         filtered.append(article)
 
     if not silent:
@@ -334,6 +426,10 @@ def filter_non_news_and_old_articles(articles, silent=False):
             print(f"   -> 비뉴스 소스(블로그/브런치) {non_news_count}개 제외")
         if old_count > 0:
             print(f"   -> 24시간 이상 된 기사 {old_count}개 제외")
+        if promo_count > 0:
+            print(f"   -> 홍보성/패키지 기사 {promo_count}개 제외")
+        if low_value_count > 0:
+            print(f"   -> 낮은 가치 기사 {low_value_count}개 제외")
 
     return filtered
 
@@ -719,25 +815,35 @@ def collect_all_news(silent=False):
 
     # 키워드 검색 쿼리 - ONDA 비즈니스 관련 핵심 키워드
     search_queries = [
-        # OTA 플랫폼 (핵심)
-        "야놀자",
-        "여기어때",
+        # === 1순위: OTA 플랫폼 (산업 핵심) ===
+        "야놀자 뉴스",
+        "여기어때 뉴스",
         "에어비앤비 한국",
         "아고다 한국",
         "부킹닷컴 한국",
-        # 숙박업
-        "호텔 업계 뉴스",
-        "숙박업",
-        "리조트 뉴스",
-        # 정책/규제
+        "트립닷컴 한국",
+        "익스피디아 한국",
+
+        # === 2순위: 산업 이슈/규제 ===
+        "OTA 시장",
         "숙박업 규제",
-        "공유숙박",
-        "관광공사",
-        # 트래블테크/스타트업
-        "트래블테크",
+        "공유숙박 정책",
+        "생활숙박시설",
+        "관광공사 정책",
+
+        # === 3순위: 호스피탈리티 테크/B2B ===
         "호스피탈리티 테크",
-        "숙박 플랫폼",
-        # ONDA 직접
+        "호텔 PMS",
+        "채널매니저 숙박",
+        "호텔 무인화",
+        "숙박 솔루션",
+
+        # === 4순위: 숙박업계 동향 ===
+        "호텔 업계 동향",
+        "숙박업 트렌드",
+        "호텔 실적",
+
+        # === 5순위: ONDA 직접 ===
         "온다 ONDA 숙박"
     ]
 
@@ -2381,15 +2487,24 @@ def main():
 
     # 8. latest_news.json 저장 (GitHub Actions용)
     import json as json_module
+
+    # TOP 3와 TOP 20을 별도로 구성 (중복 없이)
+    top_3_articles = top_articles[:3]
+    top_3_links = set(a['link'] for a in top_3_articles)
+
+    # TOP 20은 TOP 3 제외한 4~23위 기사 (중복 없이 20개)
+    remaining_articles = [a for a in top_articles[3:] if a['link'] not in top_3_links]
+    top_20_articles = remaining_articles[:20]
+
     latest_news_data = {
-        'top_3': top_articles[:3],
-        'top_20': top_articles[:20],
+        'top_3': top_3_articles,
+        'top_20': top_20_articles,
         'scraped_at': datetime.now().isoformat()
     }
     with open('latest_news.json', 'w', encoding='utf-8') as f:
         json_module.dump(latest_news_data, f, ensure_ascii=False, indent=2)
     if not args.silent:
-        print(f"   -> latest_news.json 저장 완료")
+        print(f"   -> latest_news.json 저장 완료 (TOP 3 + TOP 20 별도 구성)")
 
     # 9. 콘솔 출력
     print("\n" + "=" * 80)
