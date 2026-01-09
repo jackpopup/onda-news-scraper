@@ -273,6 +273,70 @@ MARKET_DATA_KEYWORDS = [
     '이용자', '예약', '객실점유율', 'ADR', 'RevPAR'
 ]
 
+# ============================================
+# 비뉴스 도메인 필터 (블로그, 브런치 등 제외)
+# ============================================
+NON_NEWS_DOMAINS = [
+    'brunch.co.kr',      # 브런치
+    'blog.naver.com',    # 네이버 블로그
+    'tistory.com',       # 티스토리
+    'velog.io',          # velog
+    'medium.com',        # 미디엄
+    'notion.site',       # 노션
+    'youtube.com',       # 유튜브
+    'youtu.be',          # 유튜브 단축
+    'instagram.com',     # 인스타그램
+    'facebook.com',      # 페이스북
+    'twitter.com',       # 트위터
+    'x.com',             # X (트위터)
+    'cafe.naver.com',    # 네이버 카페
+    'post.naver.com',    # 네이버 포스트
+]
+
+
+def is_non_news_source(url):
+    """
+    비뉴스 소스(블로그, 브런치 등)인지 확인
+    """
+    url_lower = url.lower()
+    for domain in NON_NEWS_DOMAINS:
+        if domain in url_lower:
+            return True
+    return False
+
+
+def filter_non_news_and_old_articles(articles, silent=False):
+    """
+    비뉴스 소스와 24시간 이상 된 기사 필터링
+
+    - 브런치, 블로그 등 비뉴스 소스 제외
+    - 24시간 이내 기사만 포함 (is_recent=True)
+    """
+    filtered = []
+    non_news_count = 0
+    old_count = 0
+
+    for article in articles:
+        # 1. 비뉴스 소스 필터링
+        if is_non_news_source(article.get('link', '')):
+            non_news_count += 1
+            continue
+
+        # 2. 24시간 이내 기사만 포함
+        if not article.get('is_recent', False):
+            old_count += 1
+            continue
+
+        filtered.append(article)
+
+    if not silent:
+        if non_news_count > 0:
+            print(f"   -> 비뉴스 소스(블로그/브런치) {non_news_count}개 제외")
+        if old_count > 0:
+            print(f"   -> 24시간 이상 된 기사 {old_count}개 제외")
+
+    return filtered
+
 
 def get_naver_news_search(query, display=30):
     """
@@ -2084,6 +2148,15 @@ def main():
     else:
         if not args.silent:
             print("   -> 히스토리 체크 스킵\n")
+
+    # 1.6 비뉴스 소스 및 24시간 이상 기사 필터링
+    if not args.silent:
+        print("[1.6단계] 비뉴스/오래된 기사 필터링 중...")
+    before_filter = len(articles)
+    articles = filter_non_news_and_old_articles(articles, silent=args.silent)
+    if not args.silent:
+        filtered = before_filter - len(articles)
+        print(f"   -> 총 {filtered}개 제외 ({before_filter}개 -> {len(articles)}개)\n")
 
     # 2. 관련도 점수 계산
     if not args.silent:
