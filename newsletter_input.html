@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeeklyON 뉴스레터 생성기</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #004FC5;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #004FC5;
+        }
+        .section h2 span {
+            font-size: 14px;
+            color: #666;
+            font-weight: normal;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #004FC5;
+        }
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        textarea.small {
+            min-height: 80px;
+        }
+        .news-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #004FC5;
+        }
+        .news-item h3 {
+            font-size: 14px;
+            color: #004FC5;
+            margin-bottom: 10px;
+        }
+        .news-item input, .news-item textarea {
+            margin-bottom: 10px;
+        }
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+        .row > div {
+            flex: 1;
+        }
+        button {
+            background: #004FC5;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #003da5;
+        }
+        .preview-btn {
+            background: #28a745;
+            margin-bottom: 10px;
+        }
+        .preview-btn:hover {
+            background: #218838;
+        }
+        .copy-btn {
+            background: #6c757d;
+        }
+        .copy-btn:hover {
+            background: #5a6268;
+        }
+        #output {
+            display: none;
+            margin-top: 30px;
+        }
+        #output.show {
+            display: block;
+        }
+        .output-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .output-section h3 {
+            margin-bottom: 15px;
+            color: #004FC5;
+        }
+        #preview-frame {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        #markdown-output {
+            width: 100%;
+            height: 400px;
+            font-family: monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .tip {
+            background: #fff3cd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #856404;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WeeklyON 뉴스레터 생성기</h1>
+
+        <!-- 기본 정보 -->
+        <div class="section">
+            <h2>기본 정보</h2>
+            <div class="row">
+                <div>
+                    <label>호수 (Vol.)</label>
+                    <input type="number" id="vol-number" value="162" placeholder="162">
+                </div>
+                <div>
+                    <label>발행일</label>
+                    <input type="text" id="pub-date" placeholder="2026년 01월 09일">
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="section">
+            <h2>🏠 산업 이야기 <span>(메인 콘텐츠)</span></h2>
+            <label>제목</label>
+            <input type="text" id="main-title" placeholder="예: 10만 개 잠재 객실의 시장 진입, 생숙 규제 완화가 가져올 시장 변화">
+
+            <label>본문 (Markdown 지원)</label>
+            <textarea id="main-content" placeholder="메인 콘텐츠 본문을 입력하세요..."></textarea>
+        </div>
+
+        <!-- 호스피탈리티 트렌드 -->
+        <div class="section">
+            <h2>💡 호스피탈리티 트렌드 <span>(선택사항)</span></h2>
+            <label>제목</label>
+            <input type="text" id="trend-title" placeholder="예: 부킹닷컴, 부당광고 행위로 제재">
+
+            <label>요약</label>
+            <textarea class="small" id="trend-summary" placeholder="트렌드 기사 요약..."></textarea>
+
+            <label>링크</label>
+            <input type="text" id="trend-link" placeholder="https://...">
+        </div>
+
+        <!-- 키워드 뉴스 5개 -->
+        <div class="section">
+            <h2>⌨️ 키워드 뉴스 <span>(5개)</span></h2>
+            <p class="tip">💡 각 뉴스의 제목, 한줄요약, 링크를 입력하세요.</p>
+
+            <div class="news-item">
+                <h3>1️⃣ 뉴스 1</h3>
+                <input type="text" id="news1-title" placeholder="제목">
+                <input type="text" id="news1-summary" placeholder="한줄요약">
+                <input type="text" id="news1-link" placeholder="링크 URL">
+            </div>
+
+            <div class="news-item">
+                <h3>2️⃣ 뉴스 2</h3>
+                <input type="text" id="news2-title" placeholder="제목">
+                <input type="text" id="news2-summary" placeholder="한줄요약">
+                <input type="text" id="news2-link" placeholder="링크 URL">
+            </div>
+
+            <div class="news-item">
+                <h3>3️⃣ 뉴스 3</h3>
+                <input type="text" id="news3-title" placeholder="제목">
+                <input type="text" id="news3-summary" placeholder="한줄요약">
+                <input type="text" id="news3-link" placeholder="링크 URL">
+            </div>
+
+            <div class="news-item">
+                <h3>4️⃣ 뉴스 4</h3>
+                <input type="text" id="news4-title" placeholder="제목">
+                <input type="text" id="news4-summary" placeholder="한줄요약">
+                <input type="text" id="news4-link" placeholder="링크 URL">
+            </div>
+
+            <div class="news-item">
+                <h3>5️⃣ 뉴스 5</h3>
+                <input type="text" id="news5-title" placeholder="제목">
+                <input type="text" id="news5-summary" placeholder="한줄요약">
+                <input type="text" id="news5-link" placeholder="링크 URL">
+            </div>
+        </div>
+
+        <!-- 생성 버튼 -->
+        <button class="preview-btn" onclick="generateNewsletter()">뉴스레터 생성</button>
+
+        <!-- 출력 -->
+        <div id="output">
+            <div class="output-section">
+                <h3>HTML 미리보기</h3>
+                <button class="copy-btn" onclick="downloadHTML()" style="width: auto; margin-bottom: 15px;">HTML 다운로드</button>
+                <iframe id="preview-frame"></iframe>
+            </div>
+
+            <div class="output-section">
+                <h3>Markdown (Google Docs 복사용)</h3>
+                <button class="copy-btn" onclick="copyMarkdown()" style="width: auto; margin-bottom: 15px;">클립보드에 복사</button>
+                <textarea id="markdown-output" readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 오늘 날짜 기본값 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}년 ${String(today.getMonth()+1).padStart(2,'0')}월 ${String(today.getDate()).padStart(2,'0')}일`;
+            document.getElementById('pub-date').value = dateStr;
+        });
+
+        function generateNewsletter() {
+            const volNumber = document.getElementById('vol-number').value;
+            const pubDate = document.getElementById('pub-date').value;
+            const mainTitle = document.getElementById('main-title').value;
+            const mainContent = document.getElementById('main-content').value;
+            const trendTitle = document.getElementById('trend-title').value;
+            const trendSummary = document.getElementById('trend-summary').value;
+            const trendLink = document.getElementById('trend-link').value;
+
+            // 키워드 뉴스 수집
+            const keywordNews = [];
+            for (let i = 1; i <= 5; i++) {
+                const title = document.getElementById(`news${i}-title`).value;
+                const summary = document.getElementById(`news${i}-summary`).value;
+                const link = document.getElementById(`news${i}-link`).value;
+                if (title) {
+                    keywordNews.push({ title, summary, link });
+                }
+            }
+
+            // HTML 생성
+            const html = generateHTML(volNumber, pubDate, mainTitle, mainContent, trendTitle, trendSummary, trendLink, keywordNews);
+
+            // Markdown 생성
+            const markdown = generateMarkdown(volNumber, pubDate, mainTitle, mainContent, trendTitle, trendSummary, trendLink, keywordNews);
+
+            // 출력
+            document.getElementById('output').classList.add('show');
+            document.getElementById('preview-frame').srcdoc = html;
+            document.getElementById('markdown-output').value = markdown;
+
+            // 스크롤 이동
+            document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateHTML(vol, date, mainTitle, mainContent, trendTitle, trendSummary, trendLink, news) {
+            // 메인 콘텐츠 HTML 변환
+            let mainHtml = mainContent
+                .split('\n\n')
+                .filter(p => p.trim())
+                .map(p => {
+                    p = p.trim();
+                    if (p.startsWith('## ')) return `<h3>${p.slice(3)}</h3>`;
+                    if (p.startsWith('### ')) return `<h4>${p.slice(4)}</h4>`;
+                    if (p.startsWith('- ')) {
+                        const items = p.split('\n').map(l => `<li>${l.slice(2)}</li>`).join('');
+                        return `<ul>${items}</ul>`;
+                    }
+                    // **bold** 처리
+                    p = p.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                    return `<p>${p}</p>`;
+                })
+                .join('\n');
+
+            // 오늘의 위클리온 요약
+            const introItems = [
+                `🏠 ${mainTitle.slice(0, 50)}${mainTitle.length > 50 ? '...' : ''}`,
+                trendTitle ? `💡 ${trendTitle.slice(0, 50)}${trendTitle.length > 50 ? '...' : ''}` : null,
+                news[0] ? `⌨️ ${news[0].title.slice(0, 50)}${news[0].title.length > 50 ? '...' : ''}` : null
+            ].filter(Boolean);
+
+            // 트렌드 섹션
+            let trendHtml = '';
+            if (trendTitle) {
+                trendHtml = `
+                <div class="section">
+                    <h3>💡 호스피탈리티 트렌드</h3>
+                    <div class="news-item">
+                        <h4>${trendTitle}</h4>
+                        <p>${trendSummary}</p>
+                        ${trendLink ? `<a href="${trendLink}" class="read-more">👉 전체 뉴스 보기</a>` : ''}
+                    </div>
+                </div>`;
+            }
+
+            // 키워드 뉴스
+            const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'];
+            const newsHtml = news.map((n, i) => `
+                <div class="keyword-news">
+                    <span class="number">${emojis[i]}</span>
+                    <div class="content">
+                        <h5>${n.title}</h5>
+                        <p class="summary">한줄요약: ${n.summary}</p>
+                        ${n.link ? `<a href="${n.link}">👉 전체 뉴스 보기</a>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeeklyON vol.${vol}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Malgun Gothic', sans-serif; line-height: 1.8; color: #333; background: #f5f5f5; }
+        .container { max-width: 680px; margin: 0 auto; background: white; padding: 40px; }
+        .header { text-align: center; padding-bottom: 30px; border-bottom: 2px solid #004FC5; }
+        .header h1 { color: #004FC5; font-size: 28px; margin-bottom: 10px; }
+        .header .date { color: #666; font-size: 14px; }
+        .intro { background: #f8f9fa; padding: 20px; margin: 30px 0; border-radius: 8px; }
+        .intro h3 { font-size: 16px; margin-bottom: 15px; color: #004FC5; }
+        .intro ul { list-style: none; }
+        .intro li { padding: 8px 0; border-bottom: 1px solid #eee; }
+        .intro li:last-child { border-bottom: none; }
+        .section { margin: 40px 0; }
+        .section h3 { font-size: 20px; color: #004FC5; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .main-content { font-size: 17px; line-height: 1.9; }
+        .main-content h3 { font-size: 20px; margin: 30px 0 15px; color: #222; }
+        .main-content h4 { font-size: 18px; margin: 25px 0 15px; color: #333; }
+        .main-content p { margin-bottom: 18px; }
+        .main-content ul { margin: 15px 0 15px 20px; }
+        .main-content li { margin-bottom: 8px; }
+        .main-content strong { color: #004FC5; }
+        .keyword-news { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .keyword-news .number { font-size: 20px; }
+        .keyword-news h5 { font-size: 15px; margin-bottom: 5px; }
+        .keyword-news .summary { font-size: 14px; color: #666; }
+        .keyword-news a { font-size: 13px; color: #004FC5; text-decoration: none; }
+        .read-more { display: inline-block; color: #004FC5; text-decoration: none; font-weight: 600; }
+        .cta { text-align: center; padding: 40px; background: #004FC5; color: white; margin-top: 40px; border-radius: 8px; }
+        .cta h3 { margin-bottom: 15px; }
+        .cta a { display: inline-block; background: white; color: #004FC5; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: 600; }
+        .footer { text-align: center; padding: 30px; color: #999; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WeeklyON vol.${vol}</h1>
+            <p class="date">${date}</p>
+        </div>
+
+        <div class="intro">
+            <h3>오늘의 위클리온</h3>
+            <ul>
+                ${introItems.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>🏠 산업 이야기</h3>
+            <h2 style="font-size: 24px; margin-bottom: 20px;">${mainTitle}</h2>
+            <div class="main-content">
+                ${mainHtml}
+            </div>
+        </div>
+
+        ${trendHtml}
+
+        <div class="section">
+            <h3>⌨️ 키워드 뉴스</h3>
+            ${newsHtml}
+        </div>
+
+        <div class="cta">
+            <h3>뉴스레터 구독하기</h3>
+            <p>숙박업 사장님들을 위한 주간 뉴스레터!</p>
+            <a href="https://www.onda.me/newsletter">구독하기</a>
+        </div>
+
+        <div class="footer">
+            © ONDA. 무단 전재 및 재배포를 금지합니다.
+        </div>
+    </div>
+</body>
+</html>`;
+        }
+
+        function generateMarkdown(vol, date, mainTitle, mainContent, trendTitle, trendSummary, trendLink, news) {
+            const introItems = [
+                `- 🏠 ${mainTitle.slice(0, 50)}${mainTitle.length > 50 ? '...' : ''}`,
+                trendTitle ? `- 💡 ${trendTitle.slice(0, 50)}${trendTitle.length > 50 ? '...' : ''}` : null,
+                news[0] ? `- ⌨️ ${news[0].title.slice(0, 50)}${news[0].title.length > 50 ? '...' : ''}` : null
+            ].filter(Boolean).join('\n');
+
+            let trendMd = '';
+            if (trendTitle) {
+                trendMd = `## 💡 호스피탈리티 트렌드
+
+**${trendTitle}** ${trendLink ? `[👉[전체 뉴스 보기]](${trendLink})` : ''}
+
+${trendSummary}
+
+---
+`;
+            }
+
+            const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'];
+            const newsMd = news.map((n, i) =>
+                `${emojis[i]} ${n.title} ${n.link ? `[👉[전체 뉴스 보기]](${n.link})` : ''}
+한줄요약: ${n.summary}
+`).join('\n');
+
+            return `# WeeklyON vol.${vol}
+
+**${date}**
+
+---
+
+## 오늘의 위클리온
+
+${introItems}
+
+---
+
+## 🏠 산업 이야기
+
+### ${mainTitle}
+
+${mainContent}
+
+---
+
+${trendMd}
+
+## ⌨️ 키워드 뉴스
+
+${newsMd}
+
+---
+
+## 뉴스레터 구독하기
+
+숙박업 사장님들을 위한 주간 뉴스레터, WeeklyON을 구독하세요!
+
+[구독하기](https://www.onda.me/newsletter)
+
+---
+
+*© ONDA. 무단 전재 및 재배포를 금지합니다.*
+`;
+        }
+
+        function copyMarkdown() {
+            const textarea = document.getElementById('markdown-output');
+            textarea.select();
+            document.execCommand('copy');
+            alert('클립보드에 복사되었습니다!');
+        }
+
+        function downloadHTML() {
+            const frame = document.getElementById('preview-frame');
+            const html = frame.srcdoc;
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `newsletter_${document.getElementById('vol-number').value}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
