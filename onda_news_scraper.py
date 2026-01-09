@@ -1888,7 +1888,37 @@ def fetch_article_content(url):
 
     try:
         response = requests.get(url, headers=headers, timeout=10)
-        response.encoding = response.apparent_encoding
+
+        # 인코딩 처리 개선: HTML 내 charset 선언 우선 확인
+        encoding = None
+
+        # 1. Content-Type 헤더에서 charset 확인
+        content_type = response.headers.get('Content-Type', '').lower()
+        if 'charset=' in content_type:
+            charset_match = re.search(r'charset=([^\s;]+)', content_type)
+            if charset_match:
+                encoding = charset_match.group(1)
+
+        # 2. HTML meta 태그에서 charset 확인 (가장 신뢰성 높음)
+        if not encoding:
+            html_head = response.content[:2000].decode('latin-1', errors='replace')
+            charset_match = re.search(r'charset=["\']?([^"\'\s>]+)', html_head, re.I)
+            if charset_match:
+                encoding = charset_match.group(1)
+
+        # 3. UTF-8 디코드 시도
+        if not encoding:
+            try:
+                response.content.decode('utf-8')
+                encoding = 'utf-8'
+            except UnicodeDecodeError:
+                pass
+
+        # 4. 최종 fallback
+        if not encoding:
+            encoding = response.apparent_encoding or 'utf-8'
+
+        response.encoding = encoding
         soup = BeautifulSoup(response.text, 'html.parser')
 
         # 불필요한 태그 제거
