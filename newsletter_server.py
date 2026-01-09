@@ -135,38 +135,51 @@ def fetch_article(url):
 def summarize_article(content, title, summary_type='short'):
     """
     기사 요약 생성
-    - short: 한줄요약 (50-80자)
-    - long: 상세요약 (400-500자)
+    - short: 한줄요약 (50-80자) - 핵심 팩트만
+    - long: 상세요약 (800-1000자) - 팩트 중심
     """
     openai_key = os.environ.get('OPENAI_API_KEY')
     anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
 
     if summary_type == 'long':
-        prompt = f"""다음 기사를 400-500자로 요약해주세요.
+        prompt = f"""당신은 숙박업 전문 뉴스 에디터입니다. 다음 기사를 800-1000자로 팩트 중심 요약해주세요.
 
-요약 규칙:
-1. 핵심 내용을 2-3개 포인트로 정리
-2. 숙박업 사장님 관점에서 중요한 시사점 포함
-3. 구체적인 숫자나 데이터가 있으면 포함
-4. "~했다", "~이다" 형식의 완결된 문장
+[필수 규칙]
+1. 도입부의 장황한 설명, 배경 설명은 건너뛰고 핵심 팩트부터 시작
+2. "무엇이 어떻게 됐다"는 팩트를 먼저, 그 다음 영향/의미 설명
+3. 구체적인 숫자, 날짜, 금액, 퍼센트는 반드시 포함
+4. 숙박업 사장님에게 실질적으로 도움되는 정보 위주
+5. 불필요한 수식어, 감정적 표현 제거
+6. 단락을 나눠서 가독성 있게 작성
+
+[피해야 할 것]
+- "최근", "요즘", "화제가 되고 있다" 같은 모호한 표현
+- 기사 서두의 뻔한 배경 설명 복사
+- "~라고 한다", "~인 것으로 알려졌다" 같은 간접 인용 남발
 
 제목: {title}
-내용: {content[:3000]}
+기사 전문: {content[:4000]}
 
-400-500자 요약:"""
-        max_tokens = 600
+팩트 중심 요약 (800-1000자):"""
+        max_tokens = 1200
     else:
-        prompt = f"""다음 기사를 50-80자로 한줄 요약해주세요.
+        prompt = f"""당신은 숙박업 전문 뉴스 에디터입니다. 다음 기사의 가장 중요한 팩트 1개를 50-80자로 요약해주세요.
 
-요약 규칙:
-1. 핵심 팩트 1개만 전달
-2. 구체적인 숫자 포함 (있다면)
-3. "~했다", "~이다" 형식의 완결된 문장
+[필수 규칙]
+1. 기사에서 가장 중요한 핵심 팩트 1개만 추출
+2. "누가/무엇이 + 어떻게 됐다" 형식
+3. 숫자가 있으면 반드시 포함 (금액, 퍼센트, 날짜 등)
+4. 완결된 문장으로 끝내기
+
+[피해야 할 것]
+- 기사 첫 문장을 그대로 가져오기
+- "~에 대해", "~관련" 같은 모호한 표현
+- 배경 설명이나 도입부 내용
 
 제목: {title}
-내용: {content[:2000]}
+기사 전문: {content[:2500]}
 
-한줄요약:"""
+핵심 팩트 한줄 (50-80자):"""
         max_tokens = 150
 
     # OpenAI 시도
@@ -202,25 +215,26 @@ def summarize_article(content, title, summary_type='short'):
         except Exception as e:
             print(f"Anthropic error: {e}")
 
-    # API 없으면 본문에서 첫 문장 추출
-    sentences = re.split(r'[.!?]', content)
-    for sentence in sentences:
-        sentence = sentence.strip()
-        if len(sentence) > 30:
-            if summary_type == 'long':
-                # 여러 문장 연결
-                result = []
-                for s in sentences[:5]:
-                    s = s.strip()
-                    if len(s) > 30:
-                        result.append(s + '.')
-                    if len(' '.join(result)) > 400:
-                        break
-                return ' '.join(result)[:500]
-            else:
-                return sentence[:80] + ('...' if len(sentence) > 80 else '.')
+    # API 없으면 본문에서 핵심 문장 추출 (첫 문장 제외)
+    sentences = [s.strip() for s in re.split(r'[.!?]', content) if len(s.strip()) > 30]
 
-    return title[:80] if title else ''
+    if summary_type == 'long':
+        # 긴 요약: 2번째 문장부터 시작 (첫 문장은 대개 도입부)
+        result = []
+        for s in sentences[1:10]:  # 2~10번째 문장 사용
+            result.append(s + '.')
+            if len(' '.join(result)) > 800:
+                break
+        return ' '.join(result)[:1000] if result else title
+    else:
+        # 짧은 요약: 숫자가 포함된 문장 우선, 없으면 2번째 문장
+        for s in sentences[1:5]:
+            if any(c.isdigit() for c in s):  # 숫자 포함 문장 우선
+                return s[:80] + ('.' if len(s) <= 80 else '...')
+        # 숫자 없으면 2번째 문장 사용
+        if len(sentences) > 1:
+            return sentences[1][:80] + ('.' if len(sentences[1]) <= 80 else '...')
+        return title[:80] if title else ''
 
 
 class NewsletterHandler(http.server.SimpleHTTPRequestHandler):
@@ -286,12 +300,12 @@ def main():
 
         # API 키 확인
         if os.environ.get('OPENAI_API_KEY'):
-            print("✅ OpenAI API 연결됨")
+            print("[OK] OpenAI API 연결됨")
         elif os.environ.get('ANTHROPIC_API_KEY'):
-            print("✅ Anthropic API 연결됨")
+            print("[OK] Anthropic API 연결됨")
         else:
-            print("⚠️  AI API 키 없음 - 기본 요약 사용")
-            print("   (OPENAI_API_KEY 또는 ANTHROPIC_API_KEY 환경변수 설정)")
+            print("[!] AI API 키 없음 - 기본 요약 사용")
+            print("    (OPENAI_API_KEY 또는 ANTHROPIC_API_KEY 환경변수 설정)")
 
         print("\n서버 실행 중... (Ctrl+C로 종료)")
         print("-" * 50)
