@@ -86,6 +86,42 @@
         .row > div {
             flex: 1;
         }
+        .link-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .link-row input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .fetch-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .fetch-btn:hover {
+            background: #138496;
+        }
+        .fetch-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .fetch-btn.loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
         button {
             background: #004FC5;
             color: white;
@@ -153,11 +189,49 @@
             color: #856404;
             margin-bottom: 15px;
         }
+        .tip.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .status-msg {
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .status-msg.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-msg.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .server-status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .server-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .server-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>WeeklyON 뉴스레터 생성기</h1>
+
+        <!-- 서버 상태 -->
+        <div id="server-status" class="server-status disconnected">
+            서버 연결 확인 중...
+        </div>
 
         <!-- 기본 정보 -->
         <div class="section">
@@ -186,55 +260,86 @@
 
         <!-- 호스피탈리티 트렌드 -->
         <div class="section">
-            <h2>💡 호스피탈리티 트렌드 <span>(선택사항)</span></h2>
-            <label>제목</label>
-            <input type="text" id="trend-title" placeholder="예: 부킹닷컴, 부당광고 행위로 제재">
-
-            <label>요약</label>
-            <textarea class="small" id="trend-summary" placeholder="트렌드 기사 요약..."></textarea>
+            <h2>💡 호스피탈리티 트렌드 <span>(링크만 입력하면 자동 요약)</span></h2>
+            <p class="tip info">링크를 입력하고 [가져오기] 버튼을 클릭하면 제목과 500자 요약이 자동 생성됩니다.</p>
 
             <label>링크</label>
-            <input type="text" id="trend-link" placeholder="https://...">
+            <div class="link-row">
+                <input type="text" id="trend-link" placeholder="https://...">
+                <button type="button" class="fetch-btn" onclick="fetchTrendArticle()">가져오기</button>
+            </div>
+            <div id="trend-status"></div>
+
+            <label>제목</label>
+            <input type="text" id="trend-title" placeholder="자동으로 채워집니다...">
+
+            <label>요약 (400-500자)</label>
+            <textarea class="small" id="trend-summary" placeholder="자동으로 채워집니다..."></textarea>
         </div>
 
         <!-- 키워드 뉴스 5개 -->
         <div class="section">
-            <h2>⌨️ 키워드 뉴스 <span>(5개)</span></h2>
-            <p class="tip">💡 각 뉴스의 제목, 한줄요약, 링크를 입력하세요.</p>
+            <h2>⌨️ 키워드 뉴스 <span>(5개 - 링크만 입력하면 자동 요약)</span></h2>
+            <p class="tip info">각 뉴스의 링크를 입력하고 [가져오기] 버튼을 클릭하면 제목과 한줄요약이 자동 생성됩니다.</p>
 
             <div class="news-item">
                 <h3>1️⃣ 뉴스 1</h3>
-                <input type="text" id="news1-title" placeholder="제목">
-                <input type="text" id="news1-summary" placeholder="한줄요약">
-                <input type="text" id="news1-link" placeholder="링크 URL">
+                <label>링크</label>
+                <div class="link-row">
+                    <input type="text" id="news1-link" placeholder="https://...">
+                    <button type="button" class="fetch-btn" onclick="fetchKeywordNews(1)">가져오기</button>
+                </div>
+                <div id="news1-status"></div>
+                <input type="text" id="news1-title" placeholder="자동으로 채워집니다...">
+                <input type="text" id="news1-summary" placeholder="자동으로 채워집니다...">
             </div>
 
             <div class="news-item">
                 <h3>2️⃣ 뉴스 2</h3>
-                <input type="text" id="news2-title" placeholder="제목">
-                <input type="text" id="news2-summary" placeholder="한줄요약">
-                <input type="text" id="news2-link" placeholder="링크 URL">
+                <label>링크</label>
+                <div class="link-row">
+                    <input type="text" id="news2-link" placeholder="https://...">
+                    <button type="button" class="fetch-btn" onclick="fetchKeywordNews(2)">가져오기</button>
+                </div>
+                <div id="news2-status"></div>
+                <input type="text" id="news2-title" placeholder="자동으로 채워집니다...">
+                <input type="text" id="news2-summary" placeholder="자동으로 채워집니다...">
             </div>
 
             <div class="news-item">
                 <h3>3️⃣ 뉴스 3</h3>
-                <input type="text" id="news3-title" placeholder="제목">
-                <input type="text" id="news3-summary" placeholder="한줄요약">
-                <input type="text" id="news3-link" placeholder="링크 URL">
+                <label>링크</label>
+                <div class="link-row">
+                    <input type="text" id="news3-link" placeholder="https://...">
+                    <button type="button" class="fetch-btn" onclick="fetchKeywordNews(3)">가져오기</button>
+                </div>
+                <div id="news3-status"></div>
+                <input type="text" id="news3-title" placeholder="자동으로 채워집니다...">
+                <input type="text" id="news3-summary" placeholder="자동으로 채워집니다...">
             </div>
 
             <div class="news-item">
                 <h3>4️⃣ 뉴스 4</h3>
-                <input type="text" id="news4-title" placeholder="제목">
-                <input type="text" id="news4-summary" placeholder="한줄요약">
-                <input type="text" id="news4-link" placeholder="링크 URL">
+                <label>링크</label>
+                <div class="link-row">
+                    <input type="text" id="news4-link" placeholder="https://...">
+                    <button type="button" class="fetch-btn" onclick="fetchKeywordNews(4)">가져오기</button>
+                </div>
+                <div id="news4-status"></div>
+                <input type="text" id="news4-title" placeholder="자동으로 채워집니다...">
+                <input type="text" id="news4-summary" placeholder="자동으로 채워집니다...">
             </div>
 
             <div class="news-item">
                 <h3>5️⃣ 뉴스 5</h3>
-                <input type="text" id="news5-title" placeholder="제목">
-                <input type="text" id="news5-summary" placeholder="한줄요약">
-                <input type="text" id="news5-link" placeholder="링크 URL">
+                <label>링크</label>
+                <div class="link-row">
+                    <input type="text" id="news5-link" placeholder="https://...">
+                    <button type="button" class="fetch-btn" onclick="fetchKeywordNews(5)">가져오기</button>
+                </div>
+                <div id="news5-status"></div>
+                <input type="text" id="news5-title" placeholder="자동으로 채워집니다...">
+                <input type="text" id="news5-summary" placeholder="자동으로 채워집니다...">
             </div>
         </div>
 
@@ -258,12 +363,127 @@
     </div>
 
     <script>
+        const API_URL = 'http://localhost:8000';
+
+        // 서버 상태 확인
+        async function checkServerStatus() {
+            const statusEl = document.getElementById('server-status');
+            try {
+                const response = await fetch(API_URL + '/newsletter_input.html', { method: 'HEAD' });
+                if (response.ok) {
+                    statusEl.className = 'server-status connected';
+                    statusEl.textContent = '서버 연결됨 - 자동 요약 기능 사용 가능';
+                } else {
+                    throw new Error('Server not running');
+                }
+            } catch (e) {
+                statusEl.className = 'server-status disconnected';
+                statusEl.innerHTML = '서버 연결 안됨 - <code>python newsletter_server.py</code> 실행 필요';
+            }
+        }
+
         // 오늘 날짜 기본값 설정
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date();
             const dateStr = `${today.getFullYear()}년 ${String(today.getMonth()+1).padStart(2,'0')}월 ${String(today.getDate()).padStart(2,'0')}일`;
             document.getElementById('pub-date').value = dateStr;
+            checkServerStatus();
         });
+
+        // 트렌드 기사 가져오기 (500자 요약)
+        async function fetchTrendArticle() {
+            const linkInput = document.getElementById('trend-link');
+            const titleInput = document.getElementById('trend-title');
+            const summaryInput = document.getElementById('trend-summary');
+            const statusEl = document.getElementById('trend-status');
+            const btn = event.target;
+
+            const url = linkInput.value.trim();
+            if (!url) {
+                showStatus(statusEl, '링크를 입력해주세요.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '가져오는 중';
+            btn.classList.add('loading');
+            showStatus(statusEl, '기사를 가져오고 요약하는 중...', 'success');
+
+            try {
+                const response = await fetch(API_URL + '/api/fetch-article', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, summary_type: 'long' })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    titleInput.value = data.title || '';
+                    summaryInput.value = data.summary || '';
+                    showStatus(statusEl, '가져오기 완료!', 'success');
+                } else {
+                    showStatus(statusEl, '오류: ' + (data.error || '기사를 가져올 수 없습니다.'), 'error');
+                }
+            } catch (e) {
+                showStatus(statusEl, '서버 연결 오류. 서버가 실행 중인지 확인하세요.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '가져오기';
+                btn.classList.remove('loading');
+            }
+        }
+
+        // 키워드 뉴스 가져오기 (한줄 요약)
+        async function fetchKeywordNews(index) {
+            const linkInput = document.getElementById(`news${index}-link`);
+            const titleInput = document.getElementById(`news${index}-title`);
+            const summaryInput = document.getElementById(`news${index}-summary`);
+            const statusEl = document.getElementById(`news${index}-status`);
+            const btn = event.target;
+
+            const url = linkInput.value.trim();
+            if (!url) {
+                showStatus(statusEl, '링크를 입력해주세요.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '가져오는 중';
+            btn.classList.add('loading');
+            showStatus(statusEl, '기사를 가져오고 요약하는 중...', 'success');
+
+            try {
+                const response = await fetch(API_URL + '/api/fetch-article', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, summary_type: 'short' })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    titleInput.value = data.title || '';
+                    summaryInput.value = data.summary || '';
+                    showStatus(statusEl, '가져오기 완료!', 'success');
+                } else {
+                    showStatus(statusEl, '오류: ' + (data.error || '기사를 가져올 수 없습니다.'), 'error');
+                }
+            } catch (e) {
+                showStatus(statusEl, '서버 연결 오류. 서버가 실행 중인지 확인하세요.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '가져오기';
+                btn.classList.remove('loading');
+            }
+        }
+
+        function showStatus(el, message, type) {
+            el.innerHTML = `<div class="status-msg ${type}">${message}</div>`;
+            if (type === 'success' && message.includes('완료')) {
+                setTimeout(() => { el.innerHTML = ''; }, 3000);
+            }
+        }
 
         function generateNewsletter() {
             const volNumber = document.getElementById('vol-number').value;
