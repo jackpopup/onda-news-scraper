@@ -76,6 +76,24 @@ def add_to_history(articles, history):
     return history
 
 
+# ============================================
+# 주말/월요일 처리 헬퍼 함수
+# ============================================
+
+def is_weekend():
+    """
+    토요일(5) 또는 일요일(6)인지 확인
+    """
+    return datetime.now().weekday() in [5, 6]
+
+
+def is_monday():
+    """
+    월요일(0)인지 확인
+    """
+    return datetime.now().weekday() == 0
+
+
 def is_already_scraped(article, history):
     """
     이미 스크랩한 기사인지 확인
@@ -388,7 +406,9 @@ def filter_non_news_and_old_articles(articles, silent=False):
     비뉴스 소스, 오래된 기사, 홍보성 기사 필터링
 
     - 브런치, 블로그 등 비뉴스 소스 제외
-    - 24시간 이내 기사만 포함 (is_recent=True)
+    - 시간 범위 내 기사만 포함 (is_recent=True)
+      - 월요일: 68시간 이내 (금요일 10시 ~ 월요일 6시)
+      - 그 외: 24시간 이내
     - 홍보성/패키지 기사 제외
     - 낮은 가치 기사 제외
     """
@@ -398,13 +418,16 @@ def filter_non_news_and_old_articles(articles, silent=False):
     promo_count = 0
     low_value_count = 0
 
+    # 월요일 여부에 따른 시간 범위 표시
+    hours_limit = 68 if is_monday() else 24
+
     for article in articles:
         # 1. 비뉴스 소스 필터링
         if is_non_news_source(article.get('link', '')):
             non_news_count += 1
             continue
 
-        # 2. 24시간 이내 기사만 포함
+        # 2. 시간 범위 내 기사만 포함
         if not article.get('is_recent', False):
             old_count += 1
             continue
@@ -425,7 +448,8 @@ def filter_non_news_and_old_articles(articles, silent=False):
         if non_news_count > 0:
             print(f"   -> 비뉴스 소스(블로그/브런치) {non_news_count}개 제외")
         if old_count > 0:
-            print(f"   -> 24시간 이상 된 기사 {old_count}개 제외")
+            time_desc = f"{hours_limit}시간" if hours_limit != 24 else "24시간"
+            print(f"   -> {time_desc} 이상 된 기사 {old_count}개 제외")
         if promo_count > 0:
             print(f"   -> 홍보성/패키지 기사 {promo_count}개 제외")
         if low_value_count > 0:
@@ -624,13 +648,31 @@ def get_google_news_search(query, num_results=15):
                     time_elem = item.select_one('div.ZE0LJd span')
                 time_text = time_elem.get_text(strip=True) if time_elem else ""
 
-                # 24시간 이내 여부 판단
+                # 시간 범위 내 여부 판단
+                # 월요일: 금요일 10시 ~ 월요일 6시 (약 68시간)
+                # 그 외: 24시간 이내
                 is_recent = False
                 if time_text:
-                    if '시간' in time_text or '분' in time_text:
+                    hours_limit = 68 if is_monday() else 24
+
+                    if '분' in time_text:
                         is_recent = True
-                    elif '1일' in time_text:
-                        is_recent = True
+                    elif '시간' in time_text:
+                        # "X시간 전" 파싱
+                        match = re.search(r'(\d+)\s*시간', time_text)
+                        if match:
+                            hours = int(match.group(1))
+                            is_recent = hours <= hours_limit
+                        else:
+                            is_recent = True
+                    elif '일' in time_text:
+                        # "X일 전" 파싱
+                        match = re.search(r'(\d+)\s*일', time_text)
+                        if match:
+                            days = int(match.group(1))
+                            is_recent = (days * 24) <= hours_limit
+                        else:
+                            is_recent = True
 
                 if title and link:
                     articles.append({
@@ -2220,13 +2262,28 @@ def main():
     parser.add_argument('--slack', action='store_true', help='Slack으로 초안 발송 (검토용)')
     parser.add_argument('--slack-final', action='store_true', help='Slack으로 최종본 발송 (클라이언트용)')
     parser.add_argument('--slack-webhook', type=str, help='Slack Webhook URL (없으면 SLACK_WEBHOOK_URL 환경변수 사용)')
+    parser.add_argument('--force', action='store_true', help='주말에도 강제 실행')
     args = parser.parse_args()
+
+    # 주말(토,일) 스킵 - 강제 실행 옵션이 없는 경우
+    if is_weekend() and not args.force:
+        print("=" * 80)
+        print("ONDA 뉴스 스크래퍼 - 주말 스킵")
+        print("=" * 80)
+        print(f"현재 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("토요일/일요일에는 뉴스 스크랩을 건너뜁니다.")
+        print("월요일에 금요일~월요일 기사를 수집합니다.")
+        print("\n강제 실행: python onda_news_scraper.py --force")
+        return
 
     if not args.silent:
         print("=" * 80)
         print("ONDA 뉴스 스크래퍼 - B2B Hospitality Tech")
         print("=" * 80)
-        print(f"수집 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        print(f"수집 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        if is_monday():
+            print("[월요일] 금요일 10시 ~ 월요일 6시 기사 수집 (68시간)")
+        print()
 
     # 0. 스크랩 히스토리 로드
     history = load_scrape_history()
