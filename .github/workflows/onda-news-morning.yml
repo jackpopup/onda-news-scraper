@@ -28,7 +28,9 @@ jobs:
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |
+          cd scraping
           python onda_news_scraper.py
+          cp latest_news.json ../latest_news.json
 
       - name: Generate HTML and Send Draft to Slack
         env:
