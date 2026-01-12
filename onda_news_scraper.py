@@ -19,6 +19,19 @@ from urllib.parse import quote
 from email_sender import create_onda_html_email, send_email_gmail
 # Slack 발송은 워크플로우에서 직접 처리 (CLI 옵션 비활성화됨)
 
+# .env 파일 로드 (python-dotenv가 설치되어 있으면 사용)
+try:
+    from dotenv import load_dotenv
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+    # scraping/ 폴더의 .env도 시도
+    scraping_env = os.path.join(os.path.dirname(__file__), 'scraping', '.env')
+    if os.path.exists(scraping_env):
+        load_dotenv(scraping_env)
+except ImportError:
+    pass  # dotenv가 없으면 환경변수만 사용
+
 # ============================================
 # 스크랩 히스토리 관리 (중복 기사 방지)
 # ============================================
@@ -460,8 +473,61 @@ def filter_non_news_and_old_articles(articles, silent=False):
 
 def get_naver_news_search(query, display=30):
     """
-    네이버 뉴스 검색 (웹 스크래핑)
+    네이버 뉴스 검색 (Naver Search API 사용)
+    환경변수: NAVER_CLIENT_ID, NAVER_CLIENT_SECRET 필요
+    API 키가 없으면 웹 스크래핑 fallback 시도
     """
+    client_id = os.environ.get('NAVER_CLIENT_ID', '')
+    client_secret = os.environ.get('NAVER_CLIENT_SECRET', '')
+
+    if client_id and client_secret:
+        return _get_naver_news_api(query, display, client_id, client_secret)
+
+    print(f"  [Naver] API 키 없음, 웹 스크래핑 시도...")
+    return _get_naver_news_scraping(query, display)
+
+
+def _get_naver_news_api(query, display, client_id, client_secret):
+    """네이버 뉴스 검색 API"""
+    url = "https://openapi.naver.com/v1/search/news.json"
+    headers = {
+        'X-Naver-Client-Id': client_id,
+        'X-Naver-Client-Secret': client_secret
+    }
+    params = {
+        'query': query,
+        'display': min(display, 100),
+        'sort': 'date'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        articles = []
+        for item in data.get('items', []):
+            title = re.sub(r'<[^>]+>', '', item.get('title', ''))
+            description = re.sub(r'<[^>]+>', '', item.get('description', ''))
+
+            articles.append({
+                'title': title,
+                'link': item.get('originallink', item.get('link', '')),
+                'summary': description,
+                'source': item.get('source', '네이버뉴스'),
+                'search_query': query,
+                'pub_date': item.get('pubDate', '')
+            })
+
+        return articles
+
+    except Exception as e:
+        print(f"  [Naver API] 오류 ({query}): {e}")
+        return []
+
+
+def _get_naver_news_scraping(query, display=30):
+    """네이버 뉴스 검색 (웹 스크래핑 - fallback)"""
     encoded_query = quote(query)
     url = f"https://search.naver.com/search.naver?where=news&query={encoded_query}&sort=1"
 
@@ -475,9 +541,11 @@ def get_naver_news_search(query, display=30):
         response = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        articles = []
+        if 'captcha' in response.text.lower() or '비정상적인' in response.text:
+            print(f"  [Naver 웹] 봇 차단 감지 ({query})")
+            return []
 
-        # 여러 가지 선택자 시도
+        articles = []
         news_items = soup.select('div.news_area')
         if not news_items:
             news_items = soup.select('li.bx')
@@ -486,7 +554,6 @@ def get_naver_news_search(query, display=30):
 
         for item in news_items[:display]:
             try:
-                # 제목 - 여러 선택자 시도
                 title_elem = item.select_one('a.news_tit')
                 if not title_elem:
                     title_elem = item.select_one('a.api_txt_lines')
@@ -498,7 +565,6 @@ def get_naver_news_search(query, display=30):
                 title = title_elem.get_text(strip=True)
                 link = title_elem.get('href', '')
 
-                # 요약
                 summary_elem = item.select_one('div.news_dsc')
                 if not summary_elem:
                     summary_elem = item.select_one('div.api_txt_lines.dsc_txt_wrap')
@@ -506,7 +572,6 @@ def get_naver_news_search(query, display=30):
                     summary_elem = item.select_one('a.api_txt_lines.dsc_txt_wrap')
                 summary = summary_elem.get_text(strip=True) if summary_elem else ""
 
-                # 언론사
                 press_elem = item.select_one('a.info.press')
                 if not press_elem:
                     press_elem = item.select_one('a.info')
@@ -523,12 +588,12 @@ def get_naver_news_search(query, display=30):
                         'source': press,
                         'search_query': query
                     })
-            except Exception as e:
+            except Exception:
                 continue
 
         return articles
     except Exception as e:
-        print(f"네이버 검색 오류 ({query}): {e}")
+        print(f"  [Naver 웹] 오류 ({query}): {e}")
         return []
 
 
