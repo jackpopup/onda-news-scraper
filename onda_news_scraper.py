@@ -510,15 +510,23 @@ def _get_naver_news_api(query, display, client_id, client_secret):
             title = re.sub(r'<[^>]+>', '', item.get('title', ''))
             description = re.sub(r'<[^>]+>', '', item.get('description', ''))
 
-            # pub_date를 time_text로 변환 (예: "Wed, 08 Jan 2026 10:30:00 +0900")
+            # pub_date를 time_text로 변환 및 is_recent 계산
+            # (예: "Wed, 08 Jan 2026 10:30:00 +0900")
             pub_date = item.get('pubDate', '')
             time_text = ''
+            is_recent = False
+            hours_limit = 68 if is_monday() else 24
+
             if pub_date:
                 try:
                     pub_dt = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %z')
                     now = datetime.now(pub_dt.tzinfo)
                     diff = now - pub_dt
                     hours = diff.total_seconds() / 3600
+
+                    # is_recent 계산 (월요일: 68시간, 그 외: 24시간)
+                    is_recent = hours <= hours_limit
+
                     if hours < 1:
                         time_text = f"{int(diff.total_seconds() / 60)}분 전"
                     elif hours < 24:
@@ -529,6 +537,7 @@ def _get_naver_news_api(query, display, client_id, client_secret):
                         time_text = f"{int(hours / 24)}일 전"
                 except Exception:
                     time_text = "1시간 전"  # 파싱 실패 시 최근으로 간주
+                    is_recent = True
 
             articles.append({
                 'title': title,
@@ -537,7 +546,8 @@ def _get_naver_news_api(query, display, client_id, client_secret):
                 'source': item.get('source', '네이버뉴스'),
                 'search_query': query,
                 'pub_date': pub_date,
-                'time_text': time_text
+                'time_text': time_text,
+                'is_recent': is_recent
             })
 
         return articles
