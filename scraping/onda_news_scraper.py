@@ -18,6 +18,15 @@ import json
 from urllib.parse import quote
 from email_sender import create_onda_html_email, send_email_gmail
 
+# .env 파일 로드 (python-dotenv가 설치되어 있으면 사용)
+try:
+    from dotenv import load_dotenv
+    # 스크립트와 같은 디렉토리의 .env 파일 로드
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    load_dotenv(env_path)
+except ImportError:
+    pass  # dotenv가 없으면 환경변수만 사용
+
 # ============================================
 # 스크랩 히스토리 관리 (중복 기사 방지)
 # ============================================
@@ -275,7 +284,74 @@ MARKET_DATA_KEYWORDS = [
 
 def get_naver_news_search(query, display=30):
     """
-    네이버 뉴스 검색 (웹 스크래핑)
+    네이버 뉴스 검색 (Naver Search API 사용)
+    환경변수: NAVER_CLIENT_ID, NAVER_CLIENT_SECRET 필요
+    API 키가 없으면 웹 스크래핑 fallback 시도
+    """
+    # 환경변수에서 API 키 로드
+    client_id = os.environ.get('NAVER_CLIENT_ID', '')
+    client_secret = os.environ.get('NAVER_CLIENT_SECRET', '')
+
+    # API 키가 있으면 API 사용
+    if client_id and client_secret:
+        return _get_naver_news_api(query, display, client_id, client_secret)
+
+    # API 키가 없으면 웹 스크래핑 시도 (fallback)
+    print(f"  [Naver] API 키 없음, 웹 스크래핑 시도...")
+    return _get_naver_news_scraping(query, display)
+
+
+def _get_naver_news_api(query, display, client_id, client_secret):
+    """
+    네이버 뉴스 검색 API
+    https://developers.naver.com/docs/serviceapi/search/news/news.md
+    """
+    url = "https://openapi.naver.com/v1/search/news.json"
+    headers = {
+        'X-Naver-Client-Id': client_id,
+        'X-Naver-Client-Secret': client_secret
+    }
+    params = {
+        'query': query,
+        'display': min(display, 100),  # API 최대 100개
+        'sort': 'date'  # 최신순 정렬
+    }
+
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        articles = []
+        for item in data.get('items', []):
+            # HTML 태그 제거
+            title = re.sub(r'<[^>]+>', '', item.get('title', ''))
+            description = re.sub(r'<[^>]+>', '', item.get('description', ''))
+
+            articles.append({
+                'title': title,
+                'link': item.get('originallink', item.get('link', '')),
+                'summary': description,
+                'source': item.get('source', '네이버뉴스'),
+                'search_query': query,
+                'pub_date': item.get('pubDate', '')
+            })
+
+        print(f"  [Naver API] '{query}': {len(articles)}개 수집")
+        return articles
+
+    except requests.exceptions.HTTPError as e:
+        print(f"  [Naver API] HTTP 오류 ({query}): {e}")
+        return []
+    except Exception as e:
+        print(f"  [Naver API] 오류 ({query}): {e}")
+        return []
+
+
+def _get_naver_news_scraping(query, display=30):
+    """
+    네이버 뉴스 검색 (웹 스크래핑 - fallback)
+    주의: 네이버가 봇 차단을 강화하여 실패할 수 있음
     """
     encoded_query = quote(query)
     url = f"https://search.naver.com/search.naver?where=news&query={encoded_query}&sort=1"
@@ -289,6 +365,11 @@ def get_naver_news_search(query, display=30):
     try:
         response = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.text, 'html.parser')
+
+        # 캡차/차단 감지
+        if 'captcha' in response.text.lower() or '비정상적인' in response.text:
+            print(f"  [Naver 웹] 봇 차단 감지 ({query})")
+            return []
 
         articles = []
 
@@ -341,9 +422,10 @@ def get_naver_news_search(query, display=30):
             except Exception as e:
                 continue
 
+        print(f"  [Naver 웹] '{query}': {len(articles)}개 수집")
         return articles
     except Exception as e:
-        print(f"네이버 검색 오류 ({query}): {e}")
+        print(f"  [Naver 웹] 오류 ({query}): {e}")
         return []
 
 

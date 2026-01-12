@@ -4,6 +4,10 @@
 # Email configuration (contains sensitive credentials)
 scraping/email_config.py
 
+# Environment variables (API keys, secrets)
+.env
+scraping/.env
+
 # Python
 __pycache__/
 *.pyc
