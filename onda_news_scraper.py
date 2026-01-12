@@ -955,6 +955,8 @@ def collect_all_news(silent=False):
     ]
 
     total_queries = len(search_queries)
+    google_count = 0
+    naver_count = 0
 
     for idx, query in enumerate(search_queries, 1):
         if not silent:
@@ -962,14 +964,20 @@ def collect_all_news(silent=False):
 
         # 구글 뉴스 검색
         google_articles = get_google_news_search(query, num_results=10)
-
-        # 관련 기사만 필터링
         for article in google_articles:
             if is_relevant_article(article):
                 all_articles.append(article)
+                google_count += 1
+
+        # 네이버 뉴스 검색 (추가)
+        naver_articles = get_naver_news_search(query, display=10)
+        for article in naver_articles:
+            if is_relevant_article(article):
+                all_articles.append(article)
+                naver_count += 1
 
     if not silent:
-        print(f"   -> 관련 기사 {len(all_articles)}개 필터링 완료")
+        print(f"   -> 관련 기사 {len(all_articles)}개 필터링 완료 (구글: {google_count}, 네이버: {naver_count})")
 
     return all_articles
 
