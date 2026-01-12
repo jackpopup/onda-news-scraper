@@ -510,13 +510,34 @@ def _get_naver_news_api(query, display, client_id, client_secret):
             title = re.sub(r'<[^>]+>', '', item.get('title', ''))
             description = re.sub(r'<[^>]+>', '', item.get('description', ''))
 
+            # pub_date를 time_text로 변환 (예: "Wed, 08 Jan 2026 10:30:00 +0900")
+            pub_date = item.get('pubDate', '')
+            time_text = ''
+            if pub_date:
+                try:
+                    pub_dt = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %z')
+                    now = datetime.now(pub_dt.tzinfo)
+                    diff = now - pub_dt
+                    hours = diff.total_seconds() / 3600
+                    if hours < 1:
+                        time_text = f"{int(diff.total_seconds() / 60)}분 전"
+                    elif hours < 24:
+                        time_text = f"{int(hours)}시간 전"
+                    elif hours < 48:
+                        time_text = "1일 전"
+                    else:
+                        time_text = f"{int(hours / 24)}일 전"
+                except Exception:
+                    time_text = "1시간 전"  # 파싱 실패 시 최근으로 간주
+
             articles.append({
                 'title': title,
                 'link': item.get('originallink', item.get('link', '')),
                 'summary': description,
                 'source': item.get('source', '네이버뉴스'),
                 'search_query': query,
-                'pub_date': item.get('pubDate', '')
+                'pub_date': pub_date,
+                'time_text': time_text
             })
 
         return articles
