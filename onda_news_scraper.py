@@ -970,9 +970,10 @@ def collect_all_news(silent=False):
                 google_count += 1
 
         # 네이버 뉴스 검색 (추가)
+        # 네이버 API는 검색어로 이미 필터링됨 → 시간 필터만 적용
         naver_articles = get_naver_news_search(query, display=10)
         for article in naver_articles:
-            if is_relevant_article(article):
+            if not is_too_old_article(article):
                 all_articles.append(article)
                 naver_count += 1
 
