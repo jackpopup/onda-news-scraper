@@ -5,446 +5,378 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ONDA 뉴스 브리핑 - 2026년 01월 13일</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: #f5f7fa;
-        }
-        .container {
             max-width: 900px;
             margin: 0 auto;
             padding: 20px;
+            background: #f5f5f5;
         }
-
-        /* 헤더 */
         .header {
-            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
             color: white;
-            padding: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
             text-align: center;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(26,35,126,0.3);
         }
         .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
+            margin: 0;
+            font-size: 24px;
         }
-        .header .subtitle {
-            font-size: 14px;
+        .header p {
+            margin: 8px 0 0 0;
             opacity: 0.9;
+            font-size: 13px;
         }
-
-        /* 섹션 타이틀 */
         .section-title {
-            background: linear-gradient(90deg, #1a237e 0%, #3949ab 100%);
+            background: #1a237e;
             color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            margin: 25px 0 20px 0;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 5px;
+            margin: 20px 0 12px 0;
+            font-size: 14px;
+            font-weight: bold;
         }
-
-        /* TOP 3 카드 */
-        .top-card {
+        .top-article {
             background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            border-left: 4px solid #1a237e;
+            border-left: 5px solid #ff6f00;
+            padding: 16px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        .rank-badge {
+        .rank {
+            display: inline-block;
+            background: #ff6f00;
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
         }
-        .category-tag {
-            background: #e8eaf6;
-            color: #3949ab;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 12px;
+        .category {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1a237e;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 8px;
         }
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 12px;
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a237e;
+            margin: 10px 0 6px 0;
             line-height: 1.4;
         }
-        .card-title a {
+        .title a {
             color: #1a237e;
             text-decoration: none;
         }
-        .card-title a:hover {
+        .title a:hover {
             text-decoration: underline;
         }
-        .card-summary {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 15px;
+        .summary {
+            color: #555;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-size: 13px;
             line-height: 1.6;
         }
-        .card-meta {
-            display: flex;
-            gap: 20px;
+        .meta {
             color: #888;
-            font-size: 13px;
-            margin-bottom: 12px;
+            font-size: 11px;
+            margin-top: 8px;
         }
-        .read-more {
+        .link {
             display: inline-block;
-            color: #1a237e;
-            font-size: 13px;
-            font-weight: 600;
+            background: #1a237e;
+            color: white;
+            padding: 6px 14px;
             text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
         }
-        .read-more:hover {
-            text-decoration: underline;
+        .link:hover {
+            background: #0d47a1;
         }
-
-        /* 4-10위 그리드 */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
+        /* 4~10위: 테이블 기반 2열 그리드 */
+        .grid-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px;
         }
-        .grid-card {
+        .grid-cell {
+            width: 50%;
             background: white;
-            border-radius: 10px;
-            padding: 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 3px solid #1a237e;
+            padding: 12px;
+            border-radius: 5px;
+            vertical-align: top;
         }
         .grid-rank {
             display: inline-block;
             background: #1a237e;
             color: white;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .grid-category {
-            display: inline-block;
-            background: #e8eaf6;
-            color: #3949ab;
             padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            margin-left: 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
         }
         .grid-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin: 10px 0;
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin: 8px 0 4px 0;
             line-height: 1.4;
         }
         .grid-title a {
-            color: #333;
+            color: #1a237e;
             text-decoration: none;
         }
         .grid-title a:hover {
-            color: #1a237e;
+            text-decoration: underline;
         }
         .grid-meta {
             color: #888;
-            font-size: 12px;
+            font-size: 10px;
         }
-
-        /* 11-20위 테이블 */
-        .table-container {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        table {
+        /* 11~20위: 테이블 형식 */
+        .news-table {
             width: 100%;
             border-collapse: collapse;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+            font-size: 12px;
         }
-        th {
-            background: #f8f9fa;
-            padding: 14px 16px;
-            text-align: left;
-            font-size: 13px;
-            font-weight: 600;
-            color: #555;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 13px;
-        }
-        tr:hover {
-            background: #fafafa;
-        }
-        .rank-cell {
-            width: 60px;
-            font-weight: 600;
+        .news-table th {
+            background: #e8eaf6;
             color: #1a237e;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 11px;
         }
-        .title-cell a {
+        .news-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        .news-table tr:last-child td {
+            border-bottom: none;
+        }
+        .news-table tr:hover {
+            background: #f8f9fa;
+        }
+        .table-rank {
+            background: #e8eaf6;
+            color: #1a237e;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .table-title {
             color: #333;
+            font-weight: 500;
+        }
+        .table-title a {
+            color: #1a237e;
             text-decoration: none;
         }
-        .title-cell a:hover {
-            color: #1a237e;
+        .table-title a:hover {
+            text-decoration: underline;
         }
-        .source-cell {
-            width: 100px;
+        .table-source {
             color: #888;
+            font-size: 10px;
+            white-space: nowrap;
         }
-        .score-cell {
-            width: 70px;
-            color: #888;
-            text-align: right;
-        }
-
-        /* 푸터 */
         .footer {
             text-align: center;
-            color: #999;
-            font-size: 12px;
-            margin-top: 40px;
-            padding: 20px;
-        }
-
-        /* 반응형 */
-        @media (max-width: 600px) {
-            .grid-container {
-                grid-template-columns: 1fr;
-            }
-            .card-meta {
-                flex-direction: column;
-                gap: 5px;
-            }
+            margin-top: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            color: #666;
+            font-size: 11px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>ONDA 뉴스 브리핑</h1>
-            <p class="subtitle">B2B Hospitality Tech | 2026년 01월 13일 | TOP 20</p>
-        </div>
+    <div class="header">
+        <h1>ONDA 뉴스 브리핑</h1>
+        <p>B2B Hospitality Tech | 2026년 01월 13일 | TOP 20</p>
+    </div>
 
-        <div class="section-title">TOP 3 주요 뉴스</div>
-        
-        <div class="top-card">
-            <div class="card-header">
-                <span class="rank-badge" style="background: #FFD700;">1st</span>
-                <span class="category-tag">기타</span>
-            </div>
-            <h3 class="card-title">
-                <a href="https://magazine.hankyung.com/business/article/202601124298b" target="_blank">[단독] “돈 내면 수술 후기 써드립니다”···네이버 대형 카페 논란</a>
-            </h3>
-            <p class="card-summary">△병원 언급 빈도가 낮은 경우 월 35만원, △병원 언급 빈도가 높은 경우 월 70만원 선이었다.</p>
-            <div class="card-meta">
-                <span>출처: 네이버뉴스</span>
-                <span>점수: 0점</span>
-            </div>
-            <a href="https://magazine.hankyung.com/business/article/202601124298b" target="_blank" class="read-more">기사 원문 보기 →</a>
-        </div>
-        
-        <div class="top-card">
-            <div class="card-header">
-                <span class="rank-badge" style="background: #C0C0C0;">2nd</span>
-                <span class="category-tag">정책/규제</span>
-            </div>
-            <h3 class="card-title">
-                <a href="https://www.idomin.com/news/articleView.html?idxno=954194" target="_blank">말 많은 생활숙박시설 경남 10%는 '불법 실거주'</a>
-            </h3>
-            <p class="card-summary">창원 지구단위계획 변경 2017년 생숙으로 건축허가를 받은 창원시 성산구 힐스테이트 창원 센트럴(296호)은 지난해 오피스텔로 용도변경을 마쳤다.</p>
-            <div class="card-meta">
-                <span>출처: 네이버뉴스</span>
-                <span>점수: 39점</span>
-            </div>
-            <a href="https://www.idomin.com/news/articleView.html?idxno=954194" target="_blank" class="read-more">기사 원문 보기 →</a>
-        </div>
-        
-        <div class="top-card">
-            <div class="card-header">
-                <span class="rank-badge" style="background: #CD7F32;">3rd</span>
-                <span class="category-tag">OTA/플랫폼</span>
-            </div>
-            <h3 class="card-title">
-                <a href="https://www.seattlen.com/hot/57730" target="_blank">익스피디아 시애틀본사 화장실에 ‘몰카’ 설치한 직원 징역 4년 > 시애틀 뉴스/핫이슈</a>
-            </h3>
-            <p class="card-summary">익스피디아 시애틀본사 화장실에 ‘몰카’ 설치한 직원 징역 4년 > 시애틀 뉴스/핫이슈</p>
-            <div class="card-meta">
-                <span>출처: SeattleN</span>
-                <span>점수: 25점</span>
-            </div>
-            <a href="https://www.seattlen.com/hot/57730" target="_blank" class="read-more">기사 원문 보기 →</a>
-        </div>
-        
+    <div class="section-title">🏆 TOP 3 주요 뉴스</div>
 
-        <div class="section-title">4-10위 뉴스</div>
-        <div class="grid-container">
-            
-        <div class="grid-card">
-            <div class="grid-rank">4위</div>
-            <span class="grid-category">숙박업계</span>
-            <h4 class="grid-title">
-                <a href="http://www.edaily.co.kr/news/newspath.asp?newsid=05152886645317064" target="_blank">[미리보는 이데일리 신문] 美中 물량공세… 韓AI, 오픈소스가 살길</a>
-            </h4>
-            <div class="grid-meta">네이버뉴스 | 점수: 15점</div>
-        </div>
-        
-        <div class="grid-card">
-            <div class="grid-rank">5위</div>
-            <span class="grid-category">숙박업계</span>
-            <h4 class="grid-title">
-                <a href="https://www.kado.net/news/articleView.html?idxno=2027772" target="_blank">철원군의회 지역 숙박업계 애로사항 청취</a>
-            </h4>
-            <div class="grid-meta">네이버뉴스 | 점수: 45점</div>
-        </div>
-        
-        <div class="grid-card">
-            <div class="grid-rank">6위</div>
-            <span class="grid-category">정책/규제</span>
-            <h4 class="grid-title">
-                <a href="https://www.jbnews.com/news/articleView.html?idxno=1496892" target="_blank">[청년창업 CEO] 친환경 생활용품 기업 ㈜네이처포션</a>
-            </h4>
-            <div class="grid-meta">네이버뉴스 | 점수: 42점</div>
-        </div>
-        
-        <div class="grid-card">
-            <div class="grid-rank">7위</div>
-            <span class="grid-category">숙박업계</span>
-            <h4 class="grid-title">
-                <a href="https://www.mt.co.kr/politics/2026/01/13/2026011220240450423" target="_blank">靑, '캄 조직 검거' 직접 발표… &quot;韓에 피해주면 혹독한 책임&quot;</a>
-            </h4>
-            <div class="grid-meta">네이버뉴스 | 점수: 15점</div>
-        </div>
-        
-        <div class="grid-card">
-            <div class="grid-rank">8위</div>
-            <span class="grid-category">숙박업계</span>
-            <h4 class="grid-title">
-                <a href="https://www.sedaily.com/NewsView/2K79XOSRN5" target="_blank">팔다리 잃은 30대 여성 '월 매출 6200만원' 대박 터트린 비결은</a>
-            </h4>
-            <div class="grid-meta">네이버뉴스 | 점수: 15점</div>
-        </div>
-        
-        <div class="grid-card">
-            <div class="grid-rank">9위</div>
-            <span class="grid-category">OTA/플랫폼</span>
-            <h4 class="grid-title">
-                <a href="https://www.iconsumer.or.kr/news/articleView.html?idxno=30015" target="_blank">여기어때의 ‘72시간 소개팅’이 보여준 브랜드를 찾게 만드는 공식</a>
-            </h4>
-            <div class="grid-meta">소비자평가 | 점수: 25점</div>
-        </div>
-        
-        <div class="grid-card">
-            <div class="grid-rank">10위</div>
-            <span class="grid-category">숙박업계</span>
-            <h4 class="grid-title">
-                <a href="http://www.seoulwire.com/news/articleView.html?idxno=701076" target="_blank">워커힐 호텔앤리조트, 설맞이 '2026 기프트 셀렉션' 출시</a>
-            </h4>
-            <div class="grid-meta">서울와이어 | 점수: 30점</div>
-        </div>
-        
-        </div>
+    <div class="top-article">
+        <span class="rank">1위</span>
+        <span class="category">트래블테크</span>
+        <div class="title"><a href="https://www.venturesquare.net/1029674/" target="_blank">"숙박업주는 호스피탈리티에만 집중하세요"…오현석 온다 대표의 어댑터 전략</a></div>
+        <div class="summary">온다는 2016년 설립된 숙박업 통합 운영 시스템(PMS) 전문 기업이다.</div>
+        <div class="meta">출처: 벤처스퀘어 | 점수: 155점</div>
+        <a href="https://www.venturesquare.net/1029674/" target="_blank" class="link">기사 읽기 →</a>
+    </div>
 
-        <div class="section-title">11-20위 뉴스</div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>순위</th>
-                        <th>제목</th>
-                        <th>출처</th>
-                        <th>점수</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    
-        <tr>
-            <td class="rank-cell">11위</td>
-            <td class="title-cell">
-                <a href="https://www.onews.tv/news/articleView.html?idxno=270647" target="_blank">조선호텔앤리조트, ‘2026 설 선물 세트’ 출시</a>
-            </td>
-            <td class="source-cell">열린뉴스통신</td>
-            <td class="score-cell">30점</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">12위</td>
-            <td class="title-cell">
-                <a href="http://www.finomy.com/news/articleView.html?idxno=247562" target="_blank">지능형로봇·인공지능(AI) 관련주, '콧노래' 러셀·더블유에스아이,·유...</a>
-            </td>
-            <td class="source-cell">네이버뉴스</td>
-            <td class="score-cell">15점</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">13위</td>
-            <td class="title-cell">
-                <a href="https://www.etnews.com/20260112000370" target="_blank">한강 눈썰매장, ‘뽀로로’를 입다… 테마를 더한 겨울 놀이터</a>
-            </td>
-            <td class="source-cell">네이버뉴스</td>
-            <td class="score-cell">20점</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">14위</td>
-            <td class="title-cell">
-                <a href="https://daily.hankooki.com/news/articleView.html?idxno=1320967" target="_blank">국립부경대 연구팀, 한국조리학회 국제학술대회 최우수상</a>
-            </td>
-            <td class="source-cell">네이버뉴스</td>
-            <td class="score-cell">20점</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">15위</td>
-            <td class="title-cell">
-                <a href="https://www.mediaus.co.kr/news/articleView.html?idxno=315805" target="_blank">법원, '한학자 방문 영상 내려달라' 세계일보 가처분 기각</a>
-            </td>
-            <td class="source-cell">네이버뉴스</td>
-            <td class="score-cell">25점</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">16위</td>
-            <td class="title-cell">
-                <a href="https://www.kdpress.co.kr/news/articleView.html?idxno=202040" target="_blank">바카티오, ‘2026 호텔페어’서 AI 기반 숙박 운영 솔루션 파인호스트 소개</a>
-            </td>
-            <td class="source-cell">데일리경제</td>
-            <td class="score-cell">30점</td>
-        </tr>
-        
-        <tr>
-            <td class="rank-cell">17위</td>
-            <td class="title-cell">
-                <a href="https://www.ihalla.com/article.php?aid=1768200383781004121" target="_blank">'제 살 깎아먹기' 제주 농어촌민박 6년 새 1800곳 폭증</a>
-            </td>
-            <td class="source-cell">한라일보</td>
-            <td class="score-cell">15점</td>
-        </tr>
-        
-                </tbody>
-            </table>
-        </div>
+    <div class="top-article">
+        <span class="rank">2위</span>
+        <span class="category">숙박업계</span>
+        <div class="title"><a href="https://www.ihalla.com/article.php?aid=1768200383781004121" target="_blank">'제 살 깎아먹기' 제주 농어촌민박 6년 새 1800곳 폭증</a></div>
+        <div class="summary">(요약 없음)</div>
+        <div class="meta">출처: 한라일보 | 점수: 15점</div>
+        <a href="https://www.ihalla.com/article.php?aid=1768200383781004121" target="_blank" class="link">기사 읽기 →</a>
+    </div>
 
-        <div class="footer">
-            이 페이지는 ONDA 뉴스 수집 시스템에서 자동으로 생성되었습니다.<br>
-            Powered by AI News Scraper
-        </div>
+    <div class="top-article">
+        <span class="rank">3위</span>
+        <span class="category">숙박업계</span>
+        <div class="title"><a href="https://www.koreapost.co.kr/news/articleView.html?idxno=84461" target="_blank">[트래블] 가족부터 캐릭터·미식까지…호텔업계, 새해 맞춤형 여행 상품 경쟁</a></div>
+        <div class="summary">(요약 없음)</div>
+        <div class="meta">출처: 코리아포스트 한글판 | 점수: 15점</div>
+        <a href="https://www.koreapost.co.kr/news/articleView.html?idxno=84461" target="_blank" class="link">기사 읽기 →</a>
+    </div>
+<div class="section-title">📰 4~10위 뉴스</div><table class="grid-table"><tbody><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">4위</span>
+                <span class="category">OTA/플랫폼</span>
+                <div class="grid-title"><a href="https://biz.chosun.com/stock/c-biz_bot/2026/01/12/MEZGGNLCMRRTQZBVMU4WKZTGG4/" target="_blank">[강세 토픽] 야놀자 관련주 테마, 아주IB투자 +9.22%, 한화투자증권 ...</a></div>
+                <div class="grid-meta">Chosunbiz | 25점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">5위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="https://www.news1.kr/industry/distribution/6036712" target="_blank">롯데호텔앤리조트, 2026 설 선물세트 판매</a></div>
+                <div class="grid-meta">뉴스1 | 30점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">6위</span>
+                <span class="category">OTA/플랫폼</span>
+                <div class="grid-title"><a href="https://www.iconsumer.or.kr/news/articleView.html?idxno=30015" target="_blank">여기어때의 ‘72시간 소개팅’이 보여준 브랜드를 찾게 만드는 공식</a></div>
+                <div class="grid-meta">소비자평가 | 25점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">7위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="https://www.kmjournal.net/news/articleView.html?idxno=7310" target="_blank">[마이스] 2026 호텔페어, 1월 21일 코엑스서 개막</a></div>
+                <div class="grid-meta">https://www.kmjournal.net/ | 15점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">8위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="https://www.dwbnews.kr/news/articleView.html?idxno=108738" target="_blank">한화호텔앤드리조트 제주, 봉개동 어려운 이웃 위해 100만 원 기탁</a></div>
+                <div class="grid-meta">DWBNEWS | 30점</div>
+            </td>
+
+            <td class="grid-cell">
+                <span class="grid-rank">9위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="https://www.traveltimes.co.kr/news/articleView.html?idxno=415030" target="_blank">크라운 플라자 리조트 사이판, 겨울 해외 골프 여행 수요 겨냥 '사이판 골프...</a></div>
+                <div class="grid-meta">여행신문 | 15점</div>
+            </td>
+</tr><tr>
+            <td class="grid-cell">
+                <span class="grid-rank">10위</span>
+                <span class="category">숙박업계</span>
+                <div class="grid-title"><a href="http://www.sukbakmagazine.com/news/articleView.html?idxno=67200" target="_blank">CCTV로 비번 확인해 금고 턴 숙박시설 직원 ‘감형’</a></div>
+                <div class="grid-meta">숙박매거진 | 15점</div>
+            </td>
+<td class="grid-cell" style="background:transparent;border:none;"></td></tr></tbody></table><div class="section-title">📋 11~20위 뉴스</div>
+    <table class="news-table">
+        <tr>
+            <th style="width:40px;">순위</th>
+            <th>제목</th>
+            <th style="width:70px;">출처</th>
+            <th style="width:50px;">점수</th>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">11위</span></td>
+            <td class="table-title"><a href="https://www.kyongbuk.co.kr/news/articleView.html?idxno=4061532" target="_blank">문경관광공사, 자체 시설팀 운영으로 유지관리 혁신…1억7천만 원 예산 절감</a></td>
+            <td class="table-source">경북일보</td>
+            <td class="table-source">12점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">12위</span></td>
+            <td class="table-title"><a href="https://v.daum.net/v/20260111140235483?f=p" target="_blank">무허가 '공유숙박' 474차례 영업…수억원 매출에 징역형</a></td>
+            <td class="table-source">Daum</td>
+            <td class="table-source">27점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">13위</span></td>
+            <td class="table-title"><a href="https://www.jnilbo.com/news/articleView.html?idxno=90000019361" target="_blank">광양시, 관광진흥기금 융자지원 사업 본격화</a></td>
+            <td class="table-source">전남일보</td>
+            <td class="table-source">12점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">14위</span></td>
+            <td class="table-title"><a href="https://www.chosun.com/international/international_general/2026/01/13/JT2GQNV7BJHJVBENLGDSZWDVDA/" target="_blank">“내 화장품을 본인 것처럼…” 태국 리조트서 청소 요청했다가 포착된 장면</a></td>
+            <td class="table-source">조선일보</td>
+            <td class="table-source">15점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">15위</span></td>
+            <td class="table-title"><a href="https://www.horacke-noviny.com/obchodni-dum-opet-privita-nakupujici?app=9987.html" target="_blank">솔레 어 리조트 의 고급 기술: 전문가 수준으로 나아가기 - 실전 사례 분석</a></td>
+            <td class="table-source">www.hor..</td>
+            <td class="table-source">15점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">16위</span></td>
+            <td class="table-title"><a href="https://www.kairnews.com/news/458805" target="_blank">스타로드 리조트, 가평에 2호점</a></td>
+            <td class="table-source">한국AI부동산..</td>
+            <td class="table-source">15점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">17위</span></td>
+            <td class="table-title"><a href="http://www.shinailbo.co.kr/news/articleView.html?idxno=2176595" target="_blank">문경관광공사, 시설물 자체 유지보수로 '예산절감'</a></td>
+            <td class="table-source">신아일보</td>
+            <td class="table-source">12점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">18위</span></td>
+            <td class="table-title"><a href="https://www.startuptoday.co.kr/news/articleView.html?idxno=571424" target="_blank">“눈꽃 너머의 예술”… 경북문화관광공사, 1월 ‘경북여행 MVTI’ 발표</a></td>
+            <td class="table-source">오늘경제</td>
+            <td class="table-source">12점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">19위</span></td>
+            <td class="table-title"><a href="https://www.bizwnews.com/news/articleView.html?idxno=121142" target="_blank">[비즈 트래블] 리셋 괌여행, 웰니스와 액티브 라이프 스타일의 기준 ‘괌’</a></td>
+            <td class="table-source">비즈월드</td>
+            <td class="table-source">0점</td>
+        </tr>
+
+        <tr>
+            <td><span class="table-rank">20위</span></td>
+            <td class="table-title"><a href="https://www.redian.org/news/articleView.html?idxno=255317" target="_blank">일본 아트체험하는 ‘최고운의 ATT(Art-Tech Travel)’ 아트테크 투어</a></td>
+            <td class="table-source">레디앙</td>
+            <td class="table-source">0점</td>
+        </tr>
+</table>
+    <div class="footer">
+        <p>이 페이지는 ONDA 뉴스 수집 시스템에서 자동으로 생성되었습니다.</p>
+        <p>🤖 Powered by AI News Scraper</p>
     </div>
 </body>
 </html>
